@@ -92,6 +92,7 @@ export async function GET(request: NextRequest) {
       paymentStatus: order.payment_status || "pending",
       createdAt: order.created_at,
       updatedAt: order.updated_at,
+      paymentReference: order.payment_reference,
     }));
 
     return NextResponse.json(transformedOrders);

@@ -165,4 +165,5 @@ export interface Order {
   paymentStatus: PaymentStatus;
   createdAt: string;
   updatedAt: string;
+  paymentReference?: string;
 }

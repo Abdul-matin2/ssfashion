@@ -12,23 +12,118 @@ const PAYMENT_LABELS: Record<string, string> = {
   card: "Card Payment",
 };
 
+interface OrderData {
+  id: string;
+  status: string;
+  payment_status: string;
+  total: number;
+  created_at: string;
+  customer_name: string;
+  payment_method: string;
+  payment_reference?: string;
+}
+
 function OrderConfirmationContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isClient, setIsClient] = useState(false);
+  const [order, setOrder] = useState<OrderData | null>(null);
+  const [isLoadingOrder, setIsLoadingOrder] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const method = searchParams.get("method") || "cod";
   const total = parseInt(searchParams.get("total") || "0", 10);
-  const orderId = searchParams.get("orderId") || `SSF-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
-  const orderDate = new Date().toLocaleDateString("en-GH", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  const orderId = searchParams.get("orderId"); // For COD orders (already created)
+  const reference = searchParams.get("reference"); // For online payments (temp reference)
+  const paid = searchParams.get("paid") === "true";
 
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  // For COD orders, we already have orderId
+  // For online payments, we need to find the order by reference (webhook creates it)
+  useEffect(() => {
+    if (!isClient) return;
+
+    const fetchOrder = async () => {
+      if (orderId) {
+        // COD order - fetch by orderId
+        try {
+          const response = await fetch(`/api/customer/orders?email=&orderId=${orderId}`);
+          if (response.ok) {
+            const data = await response.json();
+            if (data.length > 0) {
+              setOrder(data[0]);
+              return;
+            }
+          }
+        } catch {
+          // Ignore, will try other methods
+        }
+      } else if (reference && paid) {
+        // Online payment - wait for webhook to create order, then find it
+        // We'll poll for a bit to find the order
+        let attempts = 0;
+        const maxAttempts = 20; // 20 seconds max
+
+        const pollForOrder = async () => {
+          if (attempts >= maxAttempts) {
+            setError("Order is being processed. Please check your account page in a moment.");
+            setIsLoadingOrder(false);
+            return;
+          }
+
+          try {
+            // Try fetching via admin orders API (which has all orders)
+            const response = await fetch(`/api/admin/orders?status=processing`);
+            if (response.ok) {
+              const data = await response.json();
+              // Find order with matching payment_reference (the Paystack reference)
+              const found = data.find((o: OrderData) =>
+                o.payment_method === method &&
+                o.total === total &&
+                o.payment_reference === reference
+              );
+              if (found) {
+                setOrder(found);
+                return;
+              }
+            }
+          } catch {
+            // Ignore errors during polling
+          }
+
+          attempts++;
+          setTimeout(pollForOrder, 1000);
+        };
+
+        setIsLoadingOrder(true);
+        pollForOrder();
+      }
+    };
+
+    fetchOrder();
+  }, [isClient, orderId, reference, paid, method, total]);
+
+  // Also listen for the order being created via the order creation endpoint
+  // For COD, orderId is passed directly
+  useEffect(() => {
+    if (!isClient || order) return;
+
+    if (orderId) {
+      // We have an orderId for COD
+      setOrder({
+        id: orderId,
+        status: "pending",
+        payment_status: "pending",
+        total,
+        created_at: new Date().toISOString(),
+        customer_name: "",
+        payment_method: method,
+      });
+    }
+  }, [isClient, orderId, order, method, total]);
 
   if (!isClient) {
     return (
@@ -37,6 +132,64 @@ function OrderConfirmationContent() {
       </div>
     );
   }
+
+  // If still loading order for online payments
+  if (isLoadingOrder && !order) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center px-4">
+        <div className="text-center max-w-md">
+          <div className="animate-spin h-16 w-16 mx-auto text-brand-gold mb-6" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            </svg>
+          </div>
+          <h1 className="text-2xl font-bold text-brand-black mb-2">Processing Your Order</h1>
+          <p className="text-neutral-600">Your payment was successful! We're creating your order now...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If error occurred
+  if (error && !order) {
+    return (
+      <div className="min-h-screen bg-white px-4 py-12">
+        <div className="mx-auto max-w-md text-center">
+          <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-brand-red/10 mb-6">
+            <svg className="h-12 w-12 text-brand-red" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </div>
+          <h1 className="text-2xl lg:text-3xl font-bold text-brand-black mb-2">Processing</h1>
+          <p className="text-neutral-600 mb-6">{error}</p>
+          <div className="space-y-4">
+            <Link href="/account?tab=orders">
+              <Button variant="primary" size="lg" className="w-full">
+                Check My Orders
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const displayOrder = order || {
+    id: orderId || `SSF-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
+    status: "pending",
+    payment_status: paid ? "paid" : "pending",
+    total,
+    created_at: new Date().toISOString(),
+    customer_name: "",
+    payment_method: method,
+  };
+
+  const orderDate = new Date(displayOrder.created_at).toLocaleDateString("en-GH", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 
   const handleContinueShopping = () => {
     router.push("/shop");
@@ -63,7 +216,7 @@ function OrderConfirmationContent() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 pb-6 border-b border-neutral-200">
             <div>
               <p className="text-sm text-neutral-500">Order Number</p>
-              <p className="font-mono font-bold text-lg text-brand-black">{orderId}</p>
+              <p className="font-mono font-bold text-lg text-brand-black">{displayOrder.id}</p>
             </div>
             <div className="flex items-center gap-4">
               <div>
@@ -73,7 +226,7 @@ function OrderConfirmationContent() {
               <div>
                 <p className="text-sm text-neutral-500">Payment Method</p>
                 <p className="font-medium text-brand-black">
-                  {PAYMENT_LABELS[method] || method}
+                  {PAYMENT_LABELS[displayOrder.payment_method] || displayOrder.payment_method}
                 </p>
               </div>
             </div>
@@ -82,13 +235,13 @@ function OrderConfirmationContent() {
           <div className="space-y-4">
             <div className="flex justify-between">
               <span className="text-neutral-600">Order Total</span>
-              <span className="font-bold text-brand-black text-lg">{formatPrice(total)}</span>
+              <span className="font-bold text-brand-black text-lg">{formatPrice(displayOrder.total)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-neutral-600">
-                {method === "cod" ? "Amount Due on Delivery" : "Amount Charged"}
+                {displayOrder.payment_method === "cod" ? "Amount Due on Delivery" : "Amount Charged"}
               </span>
-              <span className="font-bold text-brand-black text-lg">{formatPrice(total)}</span>
+              <span className="font-bold text-brand-black text-lg">{formatPrice(displayOrder.total)}</span>
             </div>
           </div>
         </div>
@@ -106,14 +259,14 @@ function OrderConfirmationContent() {
                 Check your email for the order details and receipt.
               </span>
             </li>
-            {method === "cod" && (
+            {displayOrder.payment_method === "cod" && (
               <li className="flex items-start gap-3">
                 <svg className="flex-shrink-0 h-5 w-5 text-brand-gold mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <span>
                   <span className="font-medium text-brand-black">Prepare payment: </span>
-                  Have the exact amount (${formatPrice(total)}) ready for the courier.
+                  Have the exact amount ({formatPrice(displayOrder.total)}) ready for the courier.
                 </span>
               </li>
             )}
@@ -185,7 +338,7 @@ function OrderConfirmationContent() {
         </div>
 
         <p className="text-center text-xs text-neutral-400 mt-8">
-          Save your order number <span className="font-mono font-bold">{orderId}</span> for future reference.
+          Save your order number <span className="font-mono font-bold">{displayOrder.id}</span> for future reference.
         </p>
       </div>
     </div>

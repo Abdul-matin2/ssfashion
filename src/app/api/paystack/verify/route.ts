@@ -35,6 +35,8 @@ export async function GET(request: NextRequest) {
 
     const transaction = data.data;
 
+    console.log(`Paystack verify for ${reference}: status=${transaction.status}, gateway_response=${transaction.gateway_response}`);
+
     // Transaction successful
     if (transaction.status === "success") {
       return NextResponse.json({

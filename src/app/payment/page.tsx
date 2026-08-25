@@ -12,11 +12,9 @@ function PaymentContent() {
   const [isClient, setIsClient] = useState(false);
   const [isProcessing, setIsProcessing] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [orderCreated, setOrderCreated] = useState(false);
-  const [newOrderId, setNewOrderId] = useState<string | null>(null);
+  const [status, setStatus] = useState<string | null>(null);
 
   const reference = searchParams.get("reference");
-  const orderId = searchParams.get("orderId"); // This is the tempReference from checkout
   const total = parseInt(searchParams.get("total") || "0", 10);
   const method = searchParams.get("method") || "momo";
 
@@ -38,58 +36,30 @@ function PaymentContent() {
         const response = await fetch(`/api/paystack/verify?reference=${reference}`);
         const data = await response.json();
 
+        console.log("Paystack verify response:", data);
+        setStatus(data.status || "unknown");
+
         if (data.success) {
-          // Payment successful - NOW create the order
-          try {
-            const createOrderResponse = await fetch("/api/admin/orders", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                items: data.metadata?.items,
-                shipping: data.metadata?.shipping,
-                paymentMethod: data.metadata?.paymentMethod,
-                subtotal: data.metadata?.subtotal,
-                shippingFee: data.metadata?.shippingFee,
-                total: data.metadata?.total,
-              }),
-            });
-
-            if (createOrderResponse.ok) {
-              const createdOrder = await createOrderResponse.json();
-              setNewOrderId(createdOrder.id);
-              setOrderCreated(true);
-
-              // Update payment status on the new order
-              try {
-                await fetch(`/api/admin/orders/${createdOrder.id}`, {
-                  method: "PATCH",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ paymentStatus: "paid" }),
-                });
-              } catch {
-                console.error("Failed to update order payment status");
-              }
-
-              router.push(
-                `/order-confirmation?method=${method}&total=${total}&orderId=${createdOrder.id}&paid=true`
-              );
-              return;
-            } else {
-              throw new Error("Failed to create order after payment");
-            }
-          } catch (err) {
-            console.error("Order creation after payment failed:", err);
-            setError("Payment succeeded but order creation failed. Contact support.");
-            setIsProcessing(false);
-            return;
-          }
+          // Payment successful - redirect to order confirmation
+          // The webhook will create the order, order-confirmation page will wait for it
+          router.push(
+            `/order-confirmation?method=${method}&total=${total}&reference=${reference}&paid=true`
+          );
+          return;
         } else if (data.status === "abandoned" || data.status === "cancelled") {
           // Payment was cancelled/abandoned by user - NO order was created
+          console.log("Payment cancelled/abandoned detected, status:", data.status);
           setError("Payment was cancelled. No order was placed.");
           setIsProcessing(false);
-        } else {
+        } else if (data.status === "failed") {
           // Payment failed - NO order was created
-          setError(data.gatewayResponse || "Payment was not successful. Please try again.");
+          console.log("Payment failed detected, status:", data.status, "gatewayResponse:", data.gatewayResponse);
+          setError(data.gatewayResponse || `Payment failed (status: ${data.status}). Please try again.`);
+          setIsProcessing(false);
+        } else {
+          // Any other non-success status
+          console.log("Payment not successful, status:", data.status, "gatewayResponse:", data.gatewayResponse);
+          setError(data.gatewayResponse || `Payment was not successful (status: ${data.status}). Please try again.`);
           setIsProcessing(false);
         }
       } catch {
@@ -99,7 +69,7 @@ function PaymentContent() {
     };
 
     verifyPayment();
-  }, [isClient, reference, method, total, orderId, router]);
+  }, [isClient, reference, method, total, router]);
 
   if (!isClient) {
     return (

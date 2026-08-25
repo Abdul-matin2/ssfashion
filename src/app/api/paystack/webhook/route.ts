@@ -19,6 +19,8 @@ export async function POST(request: NextRequest) {
     const payload = await request.text();
     const signature = request.headers.get("x-paystack-signature");
 
+    console.log("Webhook received, event type:", JSON.parse(payload).event);
+
     if (!signature || !verifyPaystackSignature(payload, signature)) {
       console.error("Invalid Paystack webhook signature");
       return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
@@ -33,7 +35,7 @@ export async function POST(request: NextRequest) {
       const channel = transaction.channel;
       const metadata = transaction.metadata || {};
 
-      console.log(`Payment successful for reference ${reference} via ${channel}`);
+      console.log(`Payment successful for reference ${reference} via ${channel}`, { metadata: Object.keys(metadata) });
 
       // Check if this is a temp reference (CHK-...) meaning order needs to be created
       if (reference.startsWith("CHK-") && metadata.items) {
@@ -55,6 +57,7 @@ export async function POST(request: NextRequest) {
             status: "processing",
             payment_method: metadata.paymentMethod,
             payment_status: "paid",
+            payment_reference: reference, // Store the Paystack reference
             shipping_address: metadata.shipping,
             customer_email: metadata.shipping?.email,
             customer_name: customerName,
@@ -88,6 +91,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Send admin email notification now that order is created and paid
+        console.log("Sending admin email for new order:", newOrder.id);
         await sendAdminNewOrderEmail({
           orderId: newOrder.id,
           customerName,
@@ -121,6 +125,7 @@ export async function POST(request: NextRequest) {
         }
 
         if (currentOrder.payment_status !== "paid") {
+          console.log(`Updating existing order ${reference} payment_status to paid`);
           const { error: updateError } = await supabase
             .from("orders")
             .update({
@@ -149,6 +154,7 @@ export async function POST(request: NextRequest) {
 
       // If it's an existing order (not CHK-), update it
       if (!reference.startsWith("CHK-")) {
+        console.log(`Updating existing order ${reference} to failed/cancelled`);
         const { error: updateError } = await supabase
           .from("orders")
           .update({
@@ -161,6 +167,8 @@ export async function POST(request: NextRequest) {
         if (updateError) {
           console.error("Error updating order:", updateError);
         }
+      } else {
+        console.log(`CHK- reference ${reference} failed - no order to update (correct behavior)`);
       }
 
       return NextResponse.json({ success: true });
@@ -175,6 +183,7 @@ export async function POST(request: NextRequest) {
 
       // If it's an existing order (not CHK-), update it
       if (!reference.startsWith("CHK-")) {
+        console.log(`Updating existing order ${reference} to cancelled`);
         const { error: updateError } = await supabase
           .from("orders")
           .update({
@@ -187,6 +196,8 @@ export async function POST(request: NextRequest) {
         if (updateError) {
           console.error("Error updating order:", updateError);
         }
+      } else {
+        console.log(`CHK- reference ${reference} abandoned/cancelled - no order to update (correct behavior)`);
       }
 
       return NextResponse.json({ success: true });
