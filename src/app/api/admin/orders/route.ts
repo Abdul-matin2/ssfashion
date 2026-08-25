@@ -26,10 +26,28 @@ export async function GET(request: NextRequest) {
           price
         )
       `)
+      .not("status", "in", "('cancelled','failed')") // Exclude cancelled/failed orders by default
       .order("created_at", { ascending: false });
 
     if (status) {
-      query = query.eq("status", status);
+      // If specific status requested, allow it even if cancelled
+      query = supabase
+        .from("orders")
+        .select(`
+          *,
+          order_items (
+            id,
+            product_id,
+            name,
+            image_url,
+            size,
+            color,
+            qty,
+            price
+          )
+        `)
+        .eq("status", status)
+        .order("created_at", { ascending: false });
     }
 
     const { data: orders, error } = await query;
