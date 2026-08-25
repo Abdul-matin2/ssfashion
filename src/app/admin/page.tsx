@@ -4,12 +4,27 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/utils";
 import { getProducts, getFeaturedProducts, getNewProducts, getBrands, getCategories } from "@/lib/supabase/queries";
+import { readFile } from "fs/promises";
+import path from "path";
+import { Order } from "@/types/product";
+
+const ORDERS_FILE = path.join(process.cwd(), "src", "data", "orders.json");
+
+async function readOrders(): Promise<Order[]> {
+  try {
+    const data = await readFile(ORDERS_FILE, "utf-8");
+    return JSON.parse(data);
+  } catch {
+    return [];
+  }
+}
 
 export default async function AdminDashboardPage() {
-  const [{ products: allProducts, total: totalProducts }, featuredProductsData, newProductsData] = await Promise.all([
+  const [{ products: allProducts, total: totalProducts }, featuredProductsData, newProductsData, orders] = await Promise.all([
     getProducts({ limit: 1000 }),
     getFeaturedProducts(1000),
     getNewProducts(1000),
+    readOrders(),
   ]);
 
   const featuredProducts = featuredProductsData.length;
@@ -20,27 +35,16 @@ export default async function AdminDashboardPage() {
 
   const recentProducts = allProducts.slice(-5).reverse();
 
-  // Fetch orders data
-  const ordersRes = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/admin/orders`, {
-    cache: "no-store",
-  });
-  let orders = [];
-  try {
-    orders = await ordersRes.json();
-  } catch {
-    orders = [];
-  }
-
   const orderStats = {
     total: orders.length,
-    pending: orders.filter((o: any) => o.status === "pending").length,
-    processing: orders.filter((o: any) => o.status === "processing").length,
-    shipped: orders.filter((o: any) => o.status === "shipped").length,
-    delivered: orders.filter((o: any) => o.status === "delivered").length,
-    cancelled: orders.filter((o: any) => o.status === "cancelled").length,
+    pending: orders.filter((o) => o.status === "pending").length,
+    processing: orders.filter((o) => o.status === "processing").length,
+    shipped: orders.filter((o) => o.status === "shipped").length,
+    delivered: orders.filter((o) => o.status === "delivered").length,
+    cancelled: orders.filter((o) => o.status === "cancelled").length,
     revenue: orders
-      .filter((o: any) => o.status !== "cancelled")
-      .reduce((sum: number, o: any) => sum + o.total, 0),
+      .filter((o) => o.status !== "cancelled")
+      .reduce((sum: number, o) => sum + o.total, 0),
   };
 
   const stats = [

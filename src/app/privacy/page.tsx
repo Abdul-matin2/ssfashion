@@ -1,4 +1,6 @@
 import { cn } from "@/lib/utils";
+import fs from "fs/promises";
+import path from "path";
 
 interface Section {
   id: string;
@@ -12,15 +14,14 @@ interface PrivacyData {
   sections: Section[];
 }
 
+const PRIVACY_FILE = path.join(process.cwd(), "src/data/privacy.json");
+
 async function getPrivacyData(): Promise<PrivacyData | null> {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/api/admin/privacy`, {
-      next: { revalidate: 60 },
-    });
-    if (!res.ok) return null;
-    return await res.json();
+    const data = await fs.readFile(PRIVACY_FILE, "utf-8");
+    return JSON.parse(data);
   } catch (error) {
-    console.error("Failed to fetch privacy data:", error);
+    console.error("Failed to read privacy data:", error);
     return null;
   }
 }

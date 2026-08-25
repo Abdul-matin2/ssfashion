@@ -1,4 +1,6 @@
 import { cn } from "@/lib/utils";
+import fs from "fs/promises";
+import path from "path";
 
 interface Section {
   id: string;
@@ -12,15 +14,14 @@ interface TermsData {
   sections: Section[];
 }
 
+const TERMS_FILE = path.join(process.cwd(), "src/data/terms.json");
+
 async function getTermsData(): Promise<TermsData | null> {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/api/admin/terms`, {
-      next: { revalidate: 60 },
-    });
-    if (!res.ok) return null;
-    return await res.json();
+    const data = await fs.readFile(TERMS_FILE, "utf-8");
+    return JSON.parse(data);
   } catch (error) {
-    console.error("Failed to fetch terms data:", error);
+    console.error("Failed to read terms data:", error);
     return null;
   }
 }
