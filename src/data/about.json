@@ -1,0 +1,65 @@
+{
+  "hero": {
+    "description": ""
+  },
+  "mission": {
+    "title": "Our Mission",
+    "content": "To provide Ghanaians with access to authentic, high-quality branded footwear at fair prices, delivered with exceptional customer service.",
+    "icon": "target"
+  },
+  "vision": {
+    "title": "Our Vision",
+    "content": "To become the most trusted and loved footwear retailer in West Africa, known for authenticity, variety, and customer satisfaction.",
+    "icon": "eye"
+  },
+  "values": [
+    {
+      "title": "Authenticity Guaranteed",
+      "description": "Every product we sell is 100% authentic, sourced directly from authorized distributors.",
+      "icon": "shield"
+    },
+    {
+      "title": "Customer First",
+      "description": "Your satisfaction is our priority. We go above and beyond to ensure you're happy with every purchase.",
+      "icon": "heart"
+    },
+    {
+      "title": "Quality Selection",
+      "description": "Curated collection of the best brands and latest styles for every occasion and budget.",
+      "icon": "star"
+    },
+    {
+      "title": "Fast Delivery",
+      "description": "Nationwide delivery across Ghana with express options available. Most orders arrive within 1-3 business days.",
+      "icon": "truck"
+    }
+  ],
+  "story": {
+    "title": "Our Story",
+    "content": [
+      "S&S Fashion was born from a simple belief: everyone deserves access to authentic, high-quality footwear that tells their story. What started as a small passion project between two sneaker enthusiasts has grown into one of Ghana's most trusted footwear destinations.",
+      "We noticed a gap in the market — Ghanaians wanted genuine branded shoes but struggled to find reliable sources. We set out to change that, building direct relationships with authorized distributors to guarantee authenticity with every pair.",
+      "Today, we're proud to serve customers across Ghana and beyond, offering carefully curated collections from the world's most loved brands. But our mission remains the same: authentic products, fair prices, and service that makes you feel valued."
+    ],
+    "image": "/images/about/8e32c4a4-64e5-4f22-bced-4b6ad90eeec9.jpeg"
+  },
+  "team": [],
+  "stats": [
+    {
+      "label": "Happy Customers",
+      "value": "100+"
+    },
+    {
+      "label": "Brands Carried",
+      "value": "10+"
+    },
+    {
+      "label": "Products Available",
+      "value": "500+"
+    },
+    {
+      "label": "Cities Served",
+      "value": "20+"
+    }
+  ]
+}

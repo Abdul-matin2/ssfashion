@@ -1,0 +1,339 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/Button";
+import { cn } from "@/lib/utils";
+
+interface Cookie {
+  name: string;
+  purpose: string;
+  duration: string;
+  provider: string;
+}
+
+interface CookiesData {
+  lastUpdated: string;
+  effectiveDate: string;
+  essentialCookies: Cookie[];
+  analyticsCookies: Cookie[];
+  functionalCookies: Cookie[];
+  marketingCookies: Cookie[];
+}
+
+const cookieCategories = [
+  { key: "essentialCookies", label: "Essential Cookies" },
+  { key: "analyticsCookies", label: "Analytics Cookies" },
+  { key: "functionalCookies", label: "Functional Cookies" },
+  { key: "marketingCookies", label: "Marketing Cookies" },
+] as const;
+
+type CategoryKey = typeof cookieCategories[number]["key"];
+
+export default function AdminCookiesPage() {
+  const [data, setData] = useState<CookiesData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [activeCategory, setActiveCategory] = useState<CategoryKey>("essentialCookies");
+  const [editingCookieIndex, setEditingCookieIndex] = useState<{ category: CategoryKey; index: number } | null>(null);
+  const [formData, setFormData] = useState<Partial<CookiesData>>({});
+
+  const fetchData = async () => {
+    try {
+      const res = await fetch("/api/admin/cookies");
+      const result = await res.json();
+      if (result && !result.error) setData(result);
+    } catch (error) {
+      console.error("Failed to fetch cookies data:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const handleSave = async () => {
+    if (!data) return;
+
+    setIsLoading(true);
+    setMessage(null);
+    try {
+      const updatedData = { ...data, ...formData };
+      const res = await fetch("/api/admin/cookies", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedData),
+      });
+
+      const result = await res.json();
+      if (res.ok) {
+        setMessage({ type: "success", text: "Cookie Policy updated successfully!" });
+        setData(updatedData);
+      } else {
+        setMessage({ type: "error", text: result.error || "Failed to update content" });
+      }
+    } catch (error) {
+      console.error("Failed to save cookies data:", error);
+      setMessage({ type: "error", text: "An error occurred. Please try again." });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleChange = (path: string, value: string | number) => {
+    const keys = path.split(".");
+    const newFormData = { ...formData };
+    let current: any = newFormData;
+
+    for (let i = 0; i < keys.length - 1; i++) {
+      const key = keys[i];
+      if (!current[key]) current[key] = isNaN(Number(keys[i + 1])) ? {} : [];
+      current = current[key];
+    }
+    current[keys[keys.length - 1]] = value;
+    setFormData(newFormData);
+  };
+
+  const handleCookieChange = (category: CategoryKey, index: number, field: string, value: string) => {
+    const cookies = formData[category] || data?.[category] || [];
+    const newCookies = [...cookies];
+    newCookies[index] = { ...newCookies[index], [field]: value };
+    setFormData({ ...formData, [category]: newCookies });
+  };
+
+  const addCookie = (category: CategoryKey) => {
+    const cookies = formData[category] || data?.[category] || [];
+    const newCookie = { name: "", purpose: "", duration: "", provider: "" };
+    const newCookies = [...cookies, newCookie];
+    setFormData({ ...formData, [category]: newCookies });
+    setEditingCookieIndex({ category, index: newCookies.length - 1 });
+  };
+
+  const removeCookie = (category: CategoryKey, index: number) => {
+    if (!confirm("Are you sure you want to delete this cookie?")) return;
+    const cookies = formData[category] || data?.[category] || [];
+    const newCookies = cookies.filter((_, i) => i !== index);
+    setFormData({ ...formData, [category]: newCookies });
+    if (editingCookieIndex?.category === category && editingCookieIndex.index === index) {
+      setEditingCookieIndex(null);
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({});
+    setEditingCookieIndex(null);
+    setMessage(null);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-8">
+        <div className="p-8 text-center text-neutral-500">
+          <svg className="animate-spin h-8 w-8 mx-auto text-brand-gold mb-2" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+          </svg>
+          Loading content...
+        </div>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-8">
+        <div className="p-8 text-center text-neutral-500">Failed to load content.</div>
+      </div>
+    );
+  }
+
+  const getCookies = (category: CategoryKey) => formData[category] || data[category] || [];
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-8">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-brand-black">Manage Cookie Policy</h1>
+          <p className="text-neutral-500 mt-1">Edit cookie categories and individual cookies</p>
+        </div>
+        <Button variant="primary" onClick={handleSave} disabled={isLoading}>
+          {isLoading ? "Saving..." : "Save Changes"}
+        </Button>
+      </div>
+
+      {message && (
+        <div className={cn(
+          "p-4 rounded-xl text-sm flex items-center gap-3",
+          message.type === "success" ? "bg-green-50 text-green-800 border border-green-200" : "bg-red-50 text-red-800 border border-red-200"
+        )}>
+          <svg className="h-5 w-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+            {message.type === "success" ? (
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+            ) : (
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+            )}
+          </svg>
+          {message.text}
+        </div>
+      )}
+
+      {/* Meta Fields */}
+      <div className="bg-white rounded-2xl border border-neutral-200 p-6 space-y-6">
+        <h2 className="text-lg font-semibold text-brand-black">Page Information</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-brand-black mb-2">Last Updated *</label>
+            <input
+              type="text"
+              value={formData.lastUpdated ?? data.lastUpdated}
+              onChange={(e) => handleChange("lastUpdated", e.target.value)}
+              className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-gold focus:border-transparent transition-colors"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-brand-black mb-2">Effective Date *</label>
+            <input
+              type="text"
+              value={formData.effectiveDate ?? data.effectiveDate}
+              onChange={(e) => handleChange("effectiveDate", e.target.value)}
+              className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-gold focus:border-transparent transition-colors"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Category Tabs */}
+      <div className="bg-white rounded-2xl border border-neutral-200 overflow-hidden">
+        <div className="border-b border-neutral-200 overflow-x-auto">
+          <nav className="flex gap-1 p-1" role="tablist" aria-label="Cookie categories">
+            {cookieCategories.map((cat) => (
+              <button
+                key={cat.key}
+                onClick={() => { setActiveCategory(cat.key); setEditingCookieIndex(null); }}
+                className={cn(
+                  "px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 whitespace-nowrap",
+                  activeCategory === cat.key
+                    ? "bg-brand-black text-brand-white shadow-sm"
+                    : "text-neutral-600 hover:bg-neutral-100 hover:text-brand-black"
+                )}
+                role="tab"
+                aria-selected={activeCategory === cat.key}
+              >
+                {cat.label}
+              </button>
+            ))}
+          </nav>
+        </div>
+
+        {/* Tab Panels */}
+        <div className="p-6">
+          {cookieCategories.map((cat) => (
+            activeCategory === cat.key && (
+              <div key={cat.key} className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-semibold text-brand-black">{cat.label}</h2>
+                  <Button variant="outline" size="sm" onClick={() => addCookie(cat.key)}>
+                    + Add Cookie
+                  </Button>
+                </div>
+
+                <div className="divide-y divide-neutral-200 space-y-4">
+                  {getCookies(cat.key).map((cookie, index) => (
+                    <div key={index} className="bg-neutral-50 rounded-xl p-4 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-medium text-brand-black">Cookie #{index + 1}</h3>
+                        <div className="flex items-center gap-2">
+                          {editingCookieIndex?.category === cat.key && editingCookieIndex.index === index ? (
+                            <>
+                              <Button variant="primary" size="sm" onClick={() => { handleSave(); setEditingCookieIndex(null); }}>Save</Button>
+                              <Button variant="ghost" size="sm" onClick={() => setEditingCookieIndex(null)}>Cancel</Button>
+                            </>
+                          ) : (
+                            <>
+                              <Button variant="ghost" size="sm" onClick={() => setEditingCookieIndex({ category: cat.key, index })}>Edit</Button>
+                              <Button variant="ghost" size="sm" className="text-red-600 hover:bg-red-50" onClick={() => removeCookie(cat.key, index)}>Delete</Button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-brand-black mb-2">Cookie Name *</label>
+                          <input
+                            type="text"
+                            value={editingCookieIndex?.category === cat.key && editingCookieIndex.index === index
+                              ? (formData[cat.key]?.[index]?.name ?? cookie.name ?? "")
+                              : cookie.name ?? ""
+                            }
+                            onChange={(e) => handleCookieChange(cat.key, index, "name", e.target.value)}
+                            disabled={!(editingCookieIndex?.category === cat.key && editingCookieIndex.index === index)}
+                            className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-gold focus:border-transparent transition-colors disabled:bg-neutral-100"
+                            placeholder="e.g., _ga"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-brand-black mb-2">Provider *</label>
+                          <input
+                            type="text"
+                            value={editingCookieIndex?.category === cat.key && editingCookieIndex.index === index
+                              ? (formData[cat.key]?.[index]?.provider ?? cookie.provider ?? "")
+                              : cookie.provider ?? ""
+                            }
+                            onChange={(e) => handleCookieChange(cat.key, index, "provider", e.target.value)}
+                            disabled={!(editingCookieIndex?.category === cat.key && editingCookieIndex.index === index)}
+                            className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-gold focus:border-transparent transition-colors disabled:bg-neutral-100"
+                            placeholder="e.g., Google"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-brand-black mb-2">Duration *</label>
+                          <input
+                            type="text"
+                            value={editingCookieIndex?.category === cat.key && editingCookieIndex.index === index
+                              ? (formData[cat.key]?.[index]?.duration ?? cookie.duration ?? "")
+                              : cookie.duration ?? ""
+                            }
+                            onChange={(e) => handleCookieChange(cat.key, index, "duration", e.target.value)}
+                            disabled={!(editingCookieIndex?.category === cat.key && editingCookieIndex.index === index)}
+                            className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-gold focus:border-transparent transition-colors disabled:bg-neutral-100"
+                            placeholder="e.g., 2 years"
+                          />
+                        </div>
+                        <div className="sm:col-span-2">
+                          <label className="block text-sm font-medium text-brand-black mb-2">Purpose *</label>
+                          <textarea
+                            value={editingCookieIndex?.category === cat.key && editingCookieIndex.index === index
+                              ? (formData[cat.key]?.[index]?.purpose ?? cookie.purpose ?? "")
+                              : cookie.purpose ?? ""
+                            }
+                            onChange={(e) => handleCookieChange(cat.key, index, "purpose", e.target.value)}
+                            disabled={!(editingCookieIndex?.category === cat.key && editingCookieIndex.index === index)}
+                            rows={3}
+                            className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-gold focus:border-transparent transition-colors disabled:bg-neutral-100"
+                            placeholder="Describe what this cookie does"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  {getCookies(cat.key).length === 0 && (
+                    <div className="text-center py-8 text-neutral-500">
+                      <svg className="h-12 w-12 mx-auto text-neutral-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                      </svg>
+                      <p>No cookies in this category yet. Click "Add Cookie" to create your first one.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}

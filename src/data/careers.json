@@ -1,0 +1,105 @@
+{
+  "hero": {
+    "title": "Join Our Team",
+    "subtitle": "Help us redefine fashion retail in Ghana",
+    "description": "We're building something special — a brand that Ghanaians trust for authentic, high-quality footwear. We need passionate people to join us on this journey."
+  },
+  "culture": [
+    {
+      "title": "Innovation First",
+      "icon": "lightbulb",
+      "description": ""
+    },
+    {
+      "title": "Growth Mindset",
+      "icon": "trending",
+      "description": ""
+    },
+    {
+      "title": "Team Collaboration",
+      "icon": "users",
+      "description": ""
+    },
+    {
+      "title": "Work-Life Balance",
+      "icon": "heart",
+      "description": ""
+    }
+  ],
+  "benefits": [
+    {
+      "title": "Competitive Salary",
+      "icon": "currency",
+      "description": "Above-market compensation packages with performance bonuses and salary reviews twice a year."
+    },
+    {
+      "title": "Health Insurance",
+      "icon": "shield",
+      "description": "Comprehensive health coverage for you and your family. Medical, dental, and vision included."
+    },
+    {
+      "title": "Employee Discounts",
+      "icon": "tag",
+      "description": "40% discount on all S&S Fashion products. Plus exclusive access to new collections before public launch."
+    },
+    {
+      "title": "Training & Development",
+      "icon": "academic",
+      "description": "Annual learning budget, conference attendance, and online course subscriptions. We invest in your growth."
+    },
+    {
+      "title": "Paid Time Off",
+      "icon": "calendar",
+      "description": "25 days annual leave, plus public holidays. Additional personal days when you need them."
+    },
+    {
+      "title": "Remote Flexibility",
+      "icon": "home",
+      "description": "Hybrid work model with 3 days in-office and 2 days remote. We trust our team to manage their time."
+    }
+  ],
+  "positions": [
+    {
+      "title": "Social Media Manager",
+      "department": "Marketing",
+      "location": "Bimbilla",
+      "type": "Full-time",
+      "description": "Lead our social media strategy across Instagram, TikTok, and Twitter. Create engaging content that resonates with our audience.",
+      "requirements": [
+        "3+ years social media management experience",
+        "Strong understanding of Ghanaian social media landscape",
+        "Experience with content creation tools (Canva, Adobe Suite)",
+        "Excellent written and verbal communication skills"
+      ],
+      "posted": "2 days ago"
+    },
+    {
+      "title": "Photographer / Videographer",
+      "department": "Creative",
+      "location": "Bimbilla",
+      "type": "Contract",
+      "description": "Capture high-quality product photos and brand videos for our e-commerce platform and social media channels.",
+      "requirements": [
+        "Portfolio demonstrating product/lifestyle photography",
+        "Experience with studio and outdoor shoots",
+        "Video editing skills (Premiere Pro, Final Cut)",
+        "Own equipment (camera, lighting, basic studio setup)"
+      ],
+      "posted": "5 days ago"
+    }
+  ],
+  "testimonials": [
+    {
+      "name": "Kofi Mensah",
+      "role": "Marketing Manager",
+      "quote": "Working at S&S Fashion has been the most rewarding experience of my career. The team is incredibly supportive, and I've grown more here in 2 years than in my previous 5 years elsewhere.",
+      "image": ""
+    },
+    {
+      "name": "Ama Darko",
+      "role": "Customer Service Lead",
+      "quote": "What I love most is that my ideas actually get heard and implemented. Management genuinely cares about employee feedback, and we see real changes based on our suggestions.",
+      "image": ""
+    }
+  ]
+}

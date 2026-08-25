@@ -1,0 +1,100 @@
+{
+  "hero": {
+    "title": "Our Commitment to Sustainability",
+    "subtitle": "Fashion that cares for people and planet",
+    "description": "At S&S Fashion, we believe style and sustainability go hand in hand. We're committed to reducing our environmental impact while delivering the authentic footwear our customers love.",
+    "image": ""
+  },
+  "commitments": [
+    {
+      "title": "Ethical Sourcing",
+      "icon": "handshake",
+      "description": "We partner with brands that uphold fair labor practices and ethical manufacturing standards.",
+      "goals": [
+        "100% of suppliers audited annually for labor practices",
+        "Zero tolerance for child labor or forced labor",
+        "Fair wages verified across our supply chain"
+      ]
+    },
+    {
+      "title": "Eco-Friendly Packaging",
+      "icon": "leaf",
+      "description": "Reducing waste through sustainable packaging solutions across our operations.",
+      "goals": [
+        "100% recyclable or biodegradable packaging by 2027",
+        "50% reduction in single-use plastics achieved",
+        "Partnership with local recyclers for packaging disposal"
+      ]
+    },
+    {
+      "title": "Carbon Neutral Delivery",
+      "icon": "globe",
+      "description": "Working toward carbon-neutral delivery operations across Ghana.",
+      "goals": [
+        "Carbon offset program launched for all deliveries",
+        "Transition to electric delivery vehicles by 2028",
+        "Route optimization to reduce delivery emissions"
+      ]
+    },
+    {
+      "title": "Community Impact",
+      "icon": "users",
+      "description": "Giving back to the communities where we live and work through education and economic empowerment.",
+      "goals": [
+        "100 scholarships awarded to Ghanaian youth",
+        "Local artisan partnerships supporting 50+ artisans",
+        "Annual donation drive for underserved communities"
+      ]
+    }
+  ],
+  "initiatives": [
+    {
+      "title": "Recycled Packaging Program",
+      "icon": "recycle",
+      "description": "All shoe boxes are made from 80% recycled cardboard. Tissue paper replaced with seed paper that can be planted.",
+      "progress": 85,
+      "target": "100% recycled packaging by 2027"
+    },
+    {
+      "title": "Carbon Offset Initiative",
+      "icon": "cloud",
+      "description": "Every delivery is carbon-offset through our partnership with verified reforestation projects in Ghana.",
+      "progress": 100,
+      "target": "Carbon-neutral delivery achieved"
+    },
+    {
+      "title": "Shoe Donation Drive",
+      "icon": "gift",
+      "description": "Collecting and donating gently used shoes to communities in need across Ghana.",
+      "progress": 60,
+      "target": "10,000 pairs donated by 2027"
+    },
+    {
+      "title": "Water Conservation",
+      "icon": "droplet",
+      "description": "Working with partner brands to reduce water usage in the manufacturing process.",
+      "progress": 40,
+      "target": "30% reduction in water footprint by 2028"
+    }
+  ],
+  "timeline": [
+    { "year": "2024", "milestone": "Sustainability Commitment", "description": "Launched our sustainability program with formal commitments to ethical sourcing and environmental responsibility." },
+    { "year": "2025", "milestone": "Packaging Transformation", "description": "Transitioned to 80% recycled packaging materials and introduced plantable seed paper for tissue wrapping." },
+    { "year": "2025", "milestone": "Carbon Offset Launch", "description": "Partnered with Ghana Reforestation Network to offset all delivery emissions." },
+    { "year": "2026", "milestone": "Zero Waste Goal", "description": "Achieved 90% waste diversion rate in our warehouse operations through recycling and composting." },
+    { "year": "2027", "milestone": "100% Recyclable Packaging", "description": "Target: All packaging fully recyclable or biodegradable, with no single-use plastics." },
+    { "year": "2028", "milestone": "Electric Delivery Fleet", "description": "Target: Transition 50% of our delivery fleet to electric vehicles." }
+  ],
+  "stats": [
+    { "value": "80%", "label": "Recycled Packaging" },
+    { "value": "5,000+", "label": "Trees Planted" },
+    { "value": "3,500", "label": "Shoes Donated" },
+    { "value": "100%", "label": "Carbon Offset" }
+  ],
+  "partners": [
+    { "name": "Ghana Reforestation Network", "description": "Carbon offset partner for reforestation projects", "logo": "" },
+    { "name": "Fair Trade Ghana", "description": "Ethical sourcing certification and auditing", "logo": "" },
+    { "name": "Recycle Ghana", "description": "Packaging recycling and waste management", "logo": "" },
+    { "name": "Education For All Ghana", "description": "Scholarship program for underserved youth", "logo": "" }
+  ]
+}

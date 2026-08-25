@@ -1,0 +1,16 @@
+{
+  "enabled": false,
+  "badge": "Limited Time Only",
+  "title": "Summer Sale",
+  "subtitle": "Get up to 40% off on selected sneakers, slides, and lifestyle shoes. Don't miss these incredible deals.",
+  "discountText": "40%",
+  "discountLabel": "OFF",
+  "ctaText": "Shop the Sale",
+  "ctaLink": "/shop?sale=true",
+  "image": "https://placehold.co/800x800/1a1a1a/D4A843?text=Summer+Sale",
+  "imageAlt": "Summer Sale Collection",
+  "backgroundColor": "brand-black",
+  "textColor": "brand-white",
+  "accentColor": "brand-gold",
+  "badgeColor": "brand-red"
+}

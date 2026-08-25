@@ -1,0 +1,108 @@
+{
+  "lastUpdated": "August 22, 2026",
+  "effectiveDate": "August 22, 2026",
+  "essentialCookies": [
+    {
+      "name": "next-auth.session-token",
+      "purpose": "Maintains your authenticated session",
+      "duration": "30 days",
+      "provider": "S&S Fashion"
+    },
+    {
+      "name": "admin-auth",
+      "purpose": "Admin dashboard authentication gate",
+      "duration": "Session",
+      "provider": "S&S Fashion"
+    },
+    {
+      "name": "__Host-next-auth.csrf-token",
+      "purpose": "CSRF protection for authentication flows",
+      "duration": "Session",
+      "provider": "S&S Fashion"
+    },
+    {
+      "name": "sb-*-auth-token",
+      "purpose": "Supabase authentication tokens",
+      "duration": "1 hour (access) / 30 days (refresh)",
+      "provider": "Supabase"
+    }
+  ],
+  "analyticsCookies": [
+    {
+      "name": "_ga",
+      "purpose": "Distinguishes unique users for Google Analytics",
+      "duration": "2 years",
+      "provider": "Google"
+    },
+    {
+      "name": "_ga_*",
+      "purpose": "Persists session state for Google Analytics 4",
+      "duration": "2 years",
+      "provider": "Google"
+    },
+    {
+      "name": "_gid",
+      "purpose": "Distinguishes users for 24-hour session tracking",
+      "duration": "24 hours",
+      "provider": "Google"
+    },
+    {
+      "name": "_gat",
+      "purpose": "Throttles request rate for Google Analytics",
+      "duration": "1 minute",
+      "provider": "Google"
+    }
+  ],
+  "functionalCookies": [
+    {
+      "name": "cart",
+      "purpose": "Persists shopping cart contents",
+      "duration": "30 days",
+      "provider": "S&S Fashion"
+    },
+    {
+      "name": "wishlist",
+      "purpose": "Persists wishlist items",
+      "duration": "30 days",
+      "provider": "S&S Fashion"
+    },
+    {
+      "name": "preferences",
+      "purpose": "Stores user preferences (theme, currency, language)",
+      "duration": "1 year",
+      "provider": "S&S Fashion"
+    },
+    {
+      "name": "cookie-consent",
+      "purpose": "Remembers your cookie consent choices",
+      "duration": "1 year",
+      "provider": "S&S Fashion"
+    }
+  ],
+  "marketingCookies": [
+    {
+      "name": "_fbp",
+      "purpose": "Facebook Pixel - delivers and measures ads",
+      "duration": "3 months",
+      "provider": "Meta"
+    },
+    {
+      "name": "_gcl_au",
+      "purpose": "Google Ads conversion tracking",
+      "duration": "3 months",
+      "provider": "Google"
+    },
+    {
+      "name": "fr",
+      "purpose": "Facebook - delivers and measures ads across platforms",
+      "duration": "3 months",
+      "provider": "Meta"
+    },
+    {
+      "name": "IDE",
+      "purpose": "Google DoubleClick - measures ad effectiveness",
+      "duration": "1 year",
+      "provider": "Google"
+    }
+  ]
+}

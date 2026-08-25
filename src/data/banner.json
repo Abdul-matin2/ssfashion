@@ -1,0 +1,16 @@
+{
+  "enabled": false,
+  "badge": "New Arrival",
+  "title": "Test Upload",
+  "subtitle": "Get up to 40% off on selected sneakers, slides, and lifestyle shoes. Don't miss these incredible deals.",
+  "discountText": "30%",
+  "discountLabel": "OFF",
+  "ctaText": "Shop the Sale",
+  "ctaLink": "/shop?sale=true",
+  "image": "/images/banners/88b924c0-c17d-41f3-80a4-5a68b49070f5.jpeg",
+  "imageAlt": "Summer Sale Collection",
+  "backgroundColor": "brand-black",
+  "textColor": "brand-white",
+  "accentColor": "brand-gold",
+  "badgeColor": "brand-red"
+}

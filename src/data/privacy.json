@@ -1,0 +1,151 @@
+{
+  "lastUpdated": "August 22, 2026",
+  "effectiveDate": "August 22, 2026",
+  "sections": [
+    {
+      "id": "information-we-collect",
+      "title": "1. Information We Collect",
+      "content": [
+        "We collect information you provide directly to us, information we collect automatically when you use our Services, and information from third-party sources.",
+        "<strong>Information You Provide:</strong> When you create an account, place an order, contact customer support, submit a review, or participate in promotions, we collect personal information such as: name, email address, phone number, shipping and billing addresses, payment information (processed securely by our payment partners), order history, and communication preferences.",
+        "<strong>Automatically Collected Information:</strong> When you access our Services, we automatically collect certain information including: IP address, device type, browser type, operating system, referring URLs, pages viewed, time spent on pages, and clickstream data. We use cookies, web beacons, and similar tracking technologies for this purpose (see Section 11).",
+        "<strong>Information from Third Parties:</strong> We may receive information about you from third parties such as: payment processors (transaction confirmation), shipping carriers (delivery status), social media platforms (if you log in via social login), and marketing partners (for analytics and advertising)."
+      ]
+    },
+    {
+      "id": "how-we-use-your-information",
+      "title": "2. How We Use Your Information",
+      "content": [
+        "We use the information we collect for the following purposes:",
+        "• <strong>Order Processing:</strong> To fulfill and manage your orders, process payments, arrange shipping, and provide order updates.",
+        "• <strong>Account Management:</strong> To create and maintain your account, authenticate you, and provide customer support.",
+        "• <strong>Communication:</strong> To send order confirmations, shipping notifications, promotional emails (with your consent), and respond to inquiries.",
+        "• <strong>Personalization:</strong> To customize your experience, recommend products, and display relevant content.",
+        "• <strong>Analytics and Improvement:</strong> To analyze usage trends, improve our Services, develop new features, and optimize our marketing.",
+        "• <strong>Fraud Prevention and Security:</strong> To detect and prevent fraudulent transactions, protect against unauthorized access, and comply with legal obligations.",
+        "• <strong>Legal Compliance:</strong> To comply with applicable laws, regulations, and legal processes."
+      ]
+    },
+    {
+      "id": "sharing-your-information",
+      "title": "3. Sharing Your Information",
+      "content": [
+        "We do not sell your personal information. We share your information only as described below:",
+        "<strong>Service Providers:</strong> We share information with third-party vendors who perform services on our behalf, including: payment processing (e.g., Paystack, Stripe), shipping and fulfillment (courier partners), email and SMS delivery, analytics (Google Analytics), and customer support platforms. These providers are contractually obligated to protect your information.",
+        "<strong>Business Transfers:</strong> In the event of a merger, acquisition, or sale of assets, your information may be transferred as part of the transaction. We will notify you of any such change.",
+        "<strong>Legal Requirements:</strong> We may disclose your information if required by law, court order, or governmental request, or to protect our rights, property, or safety.",
+        "<strong>With Your Consent:</strong> We may share your information with third parties when you have given us explicit consent to do so.",
+        "<strong>Aggregated Data:</strong> We may share anonymized, aggregated data that does not identify you personally for analytics, advertising, or business purposes."
+      ]
+    },
+    {
+      "id": "data-security",
+      "title": "4. Data Security",
+      "content": [
+        "We implement appropriate technical and organizational measures to protect your personal information against unauthorized access, alteration, disclosure, or destruction. These measures include:",
+        "• Encryption of data in transit (TLS 1.2+) and at rest",
+        "• Secure payment processing through PCI DSS compliant partners (we do not store full payment card details)",
+        "• Access controls and authentication mechanisms",
+        "• Regular security assessments and monitoring",
+        "• Employee training on data protection",
+        "However, no method of transmission over the Internet or electronic storage is 100% secure. While we strive to protect your information, we cannot guarantee absolute security."
+      ]
+    },
+    {
+      "id": "data-retention",
+      "title": "5. Data Retention",
+      "content": [
+        "We retain your personal information for as long as necessary to fulfill the purposes outlined in this Policy, unless a longer retention period is required or permitted by law.",
+        "• <strong>Account Data:</strong> Retained while your account is active and for a reasonable period thereafter for legal compliance.",
+        "• <strong>Order and Transaction Data:</strong> Retained for 7 years for tax and accounting purposes (as required by Ghana Revenue Authority).",
+        "• <strong>Marketing Data:</strong> Retained until you unsubscribe or request deletion.",
+        "• <strong>Analytics Data:</strong> Retained for up to 26 months (Google Analytics default) or as needed for trend analysis.",
+        "You may request deletion of your personal information at any time (see Section 6), subject to our legal obligations to retain certain data."
+      ]
+    },
+    {
+      "id": "your-rights-and-choices",
+      "title": "6. Your Rights and Choices",
+      "content": [
+        "Under applicable data protection laws (including Ghana's Data Protection Act, 2012 (Act 843)), you have the following rights regarding your personal information:",
+        "• <strong>Right of Access:</strong> Request a copy of the personal information we hold about you.",
+        "• <strong>Right to Rectification:</strong> Request correction of inaccurate or incomplete information.",
+        "• <strong>Right to Erasure:</strong> Request deletion of your personal information (subject to legal retention requirements).",
+        "• <strong>Right to Restrict Processing:</strong> Request limitation of how we process your information.",
+        "• <strong>Right to Data Portability:</strong> Receive your data in a structured, commonly used, machine-readable format.",
+        "• <strong>Right to Object:</strong> Object to processing based on legitimate interests, including direct marketing.",
+        "• <strong>Right to Withdraw Consent:</strong> Withdraw consent for processing where we rely on consent (e.g., marketing emails).",
+        "To exercise any of these rights, please contact us at privacy@ssfashion.com. We will respond within 30 days as required by law."
+      ]
+    },
+    {
+      "id": "childrens-privacy",
+      "title": "7. Children's Privacy",
+      "content": [
+        "Our Services are not directed to individuals under 18 years of age. We do not knowingly collect personal information from children under 18. If you are a parent or guardian and believe your child has provided us with personal information, please contact us at privacy@ssfashion.com and we will take steps to delete such information."
+      ]
+    },
+    {
+      "id": "international-data-transfers",
+      "title": "8. International Data Transfers",
+      "content": [
+        "Your information may be transferred to and processed in countries other than Ghana, where data protection laws may differ. When we transfer your information internationally, we ensure appropriate safeguards are in place, such as:",
+        "• Standard contractual clauses approved by data protection authorities",
+        "• Binding corporate rules",
+        "• Adequacy decisions (where the destination country provides adequate protection)",
+        "By using our Services, you consent to the transfer of your information to our service providers and partners in other countries."
+      ]
+    },
+    {
+      "id": "third-party-links",
+      "title": "9. Third-Party Links",
+      "content": [
+        "Our Services may contain links to third-party websites, plugins, and applications. Clicking on these links may allow third parties to collect information about you. We do not control these third-party sites and are not responsible for their privacy practices. We encourage you to review the privacy policies of any third-party sites you visit."
+      ]
+    },
+    {
+      "id": "marketing-communications",
+      "title": "10. Marketing Communications",
+      "content": [
+        "With your consent, we may send you promotional emails, SMS messages, or push notifications about new products, sales, and special offers. You can opt out at any time by:",
+        "• Clicking the \"Unsubscribe\" link in any marketing email",
+        "• Replying \"STOP\" to marketing SMS messages",
+        "• Adjusting your communication preferences in your account settings",
+        "• Contacting us at marketing@ssfashion.com",
+        "Even if you opt out of marketing communications, we will still send you transactional messages (order confirmations, shipping updates, etc.)."
+      ]
+    },
+    {
+      "id": "cookies-and-tracking-technologies",
+      "title": "11. Cookies and Tracking Technologies",
+      "content": [
+        "We use cookies and similar tracking technologies (web beacons, pixels, local storage) to enhance your experience, analyze usage, and deliver personalized content. For detailed information about the types of cookies we use and how to manage them, please see our <a href=\"/cookies\" className=\"text-brand-gold hover:underline\">Cookie Policy</a>.",
+        "<strong>Categories of Cookies We Use:</strong>",
+        "• <strong>Essential Cookies:</strong> Required for the website to function (e.g., session management, security). Cannot be disabled.",
+        "• <strong>Analytics Cookies:</strong> Help us understand how visitors interact with our site (e.g., Google Analytics).",
+        "• <strong>Functional Cookies:</strong> Enable enhanced functionality and personalization (e.g., remembering preferences).",
+        "• <strong>Marketing Cookies:</strong> Used to deliver relevant advertisements and measure campaign effectiveness.",
+        "You can manage cookie preferences through our cookie banner (shown on first visit) or your browser settings. Disabling certain cookies may affect site functionality."
+      ]
+    },
+    {
+      "id": "changes-to-this-policy",
+      "title": "12. Changes to This Policy",
+      "content": [
+        "We may update this Privacy Policy from time to time to reflect changes in our practices or legal requirements. We will post the updated policy on this page with a revised \"Last updated\" date.",
+        "For material changes, we will provide notice through the Website or by email (if you have an account) at least 30 days before the changes take effect. Your continued use of the Services after the effective date constitutes acceptance of the updated policy."
+      ]
+    },
+    {
+      "id": "contact-information",
+      "title": "13. Contact Information",
+      "content": [
+        "If you have any questions, concerns, or requests regarding this Privacy Policy or our data practices, please contact our Data Protection Officer at:",
+        "• Email: privacy@ssfashion.com",
+        "• Phone: +233 24 123 4567",
+        "• Address: S&S Fashion, 12 Independence Avenue, Accra, Greater Accra, Ghana",
+        "You also have the right to lodge a complaint with the Ghana Data Protection Commission if you believe we have not addressed your concern adequately."
+      ]
+    }
+  ]
+}

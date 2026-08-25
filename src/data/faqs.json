@@ -1,0 +1,58 @@
+[
+  {
+    "id": "1",
+    "question": "How can I track my order?",
+    "answer": "Once your order is shipped, you'll receive an email with a tracking number and link. You can also track your order by logging into your account and visiting the Orders section.",
+    "category": "Orders",
+    "order": 1
+  },
+  {
+    "id": "2",
+    "question": "What is your return policy?",
+    "answer": "We accept returns within 30 days of delivery for unworn items in original condition with tags attached. Please visit our Returns page to initiate a return.",
+    "category": "Returns",
+    "order": 2
+  },
+  {
+    "id": "3",
+    "question": "How long does shipping take?",
+    "answer": "Standard shipping takes 3-5 business days within Ghana. Express shipping (1-2 business days) is available at checkout for an additional fee.",
+    "category": "Shipping",
+    "order": 3
+  },
+  {
+    "id": "4",
+    "question": "Do you offer international shipping?",
+    "answer": "Currently we only ship within Ghana. We're working on expanding to other countries soon.",
+    "category": "Shipping",
+    "order": 4
+  },
+  {
+    "id": "5",
+    "question": "What payment methods do you accept?",
+    "answer": "We accept Mobile Money (MTN, Vodafone, AirtelTigo), Card payments (Visa, Mastercard), and Cash on Delivery.",
+    "category": "Payment",
+    "order": 5
+  },
+  {
+    "id": "6",
+    "question": "How do I contact customer support?",
+    "answer": "You can reach us via email at support@ssfashion.com, call +233 24 123 4567, or use the contact form on our Contact page. We respond within 24 hours.",
+    "category": "General",
+    "order": 6
+  },
+  {
+    "id": "7",
+    "question": "Can I cancel or modify my order?",
+    "answer": "Orders can be cancelled or modified within 1 hour of placing them. Contact us immediately if you need to make changes.",
+    "category": "Orders",
+    "order": 7
+  },
+  {
+    "id": "8",
+    "question": "Do you have a physical store?",
+    "answer": "Yes! Visit us at V344+JMC, Bimbila, Ghana. We're open Mon-Sat 9AM-8PM, Sun 10AM-6PM.",
+    "category": "General",
+    "order": 8
+  }
+]

@@ -1,0 +1,111 @@
+{
+  "hero": {
+    "title": "Shipping Information",
+    "subtitle": "Fast, reliable delivery across Ghana and beyond"
+  },
+  "policies": [
+    {
+      "title": "Free Standard Shipping",
+      "icon": "truck",
+      "content": [
+        "Free standard shipping on all orders over GHS 500",
+        "Orders under GHS 500: Regional delivery fee applies",
+        "Delivery within 2-5 business days"
+      ]
+    },
+    {
+      "title": "Express Delivery",
+      "icon": "clock",
+      "content": [
+        "Available in major cities (Accra, Kumasi, Takoradi)",
+        "GHS 50 flat rate for express delivery",
+        "Delivered within 1-2 business days"
+      ]
+    },
+    {
+      "title": "International Shipping",
+      "icon": "globe",
+      "content": [
+        "Ships to West Africa (Nigeria, Ivory Coast, Togo, Benin)",
+        "Rates calculated at checkout based on destination",
+        "Delivery within 5-10 business days",
+        "Customs duties and taxes are the recipient's responsibility"
+      ]
+    }
+  ],
+  "rates": [
+    {
+      "region": "Northern Ghana",
+      "standard": "GHS 20",
+      "express": "N/A",
+      "freeThreshold": "GHS 500+"
+    },
+    {
+      "region": "Rest of Ghana",
+      "standard": "GHS 50",
+      "express": "GHS 70",
+      "freeThreshold": "GHS 500+"
+    },
+    {
+      "region": "West Africa",
+      "standard": "GHS 120",
+      "express": "GHS 200",
+      "freeThreshold": "GHS 1000+"
+    }
+  ],
+  "timeline": [
+    {
+      "step": "Order Placed",
+      "description": "Your order is confirmed and sent to our warehouse",
+      "estimatedDays": "Same day"
+    },
+    {
+      "step": "Processing",
+      "description": "Items are picked, packed, and quality checked",
+      "estimatedDays": "1 business day"
+    },
+    {
+      "step": "Dispatched",
+      "description": "Package handed to courier partner",
+      "estimatedDays": "1 business day"
+    },
+    {
+      "step": "In Transit",
+      "description": "Package is on its way to your address",
+      "estimatedDays": "1-3 business days"
+    },
+    {
+      "step": "Delivered",
+      "description": "Package arrives at your doorstep",
+      "estimatedDays": "Delivery day"
+    }
+  ],
+  "restrictions": [
+    "PO Box addresses not accepted for express delivery",
+    "Some remote areas may have extended delivery times",
+    "Signature required for orders over GHS 1000",
+    "We cannot ship to military addresses (AFO/FPO)"
+  ],
+  "faqs": [
+    {
+      "question": "How can I track my order?",
+      "answer": "Once your order ships, you'll receive an email with a tracking number. You can also track it in your account under 'My Orders' or use our Track Order page."
+    },
+    {
+      "question": "What if I'm not home when my package arrives?",
+      "answer": "Our courier will attempt delivery twice. After the second attempt, the package will be held at the nearest pickup point for 5 business days. You'll receive SMS notifications with pickup details."
+    },
+    {
+      "question": "Can I change my delivery address after ordering?",
+      "answer": "If your order hasn't been dispatched yet, contact us immediately at support@ssfashion.com or call +233 24 123 4567. Once dispatched, address changes may not be possible."
+    },
+    {
+      "question": "Do you offer weekend delivery?",
+      "answer": "Standard delivery operates Monday-Saturday. Express delivery in Accra is available on Saturdays for orders placed before 12 PM Friday. No Sunday delivery."
+    },
+    {
+      "question": "What are the Northern Ghana regions?",
+      "answer": "Northern Ghana includes: Northern, North East, Savannah, Upper East, and Upper West regions. These regions have a reduced delivery fee of GHS 20."
+    }
+  ]
+}

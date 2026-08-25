@@ -1,0 +1,93 @@
+{
+  "hero": {
+    "title": "Press & Media",
+    "subtitle": "Stories about Ghana's fastest-growing fashion brand",
+    "description": "S&S Fashion has been featured in leading publications across Ghana and West Africa. Download our press kit or get in touch with our media team."
+  },
+  "pressKit": {
+    "description": "Everything you need to write about S&S Fashion. Our press kit includes brand guidelines, logos, executive photos, and key facts.",
+    "assets": [
+      {
+        "name": "Brand Guidelines",
+        "description": "PDF document with our brand story, mission, values, and visual identity",
+        "icon": "document"
+      },
+      {
+        "name": "Logo Pack",
+        "description": "High-resolution logos in PNG, SVG, and EPS formats (light and dark versions)",
+        "icon": "image"
+      },
+      {
+        "name": "Executive Photos",
+        "description": "Professional headshots of our founding team and key leadership",
+        "icon": "camera"
+      },
+      {
+        "name": "Fact Sheet",
+        "description": "Key statistics, milestones, and facts about S&S Fashion",
+        "icon": "chart"
+      }
+    ]
+  },
+  "media": [
+    {
+      "title": "How S&S Fashion is Revolutionizing Sneaker Culture in Ghana",
+      "publication": "Tech & Style Africa",
+      "date": "2026-08-10",
+      "excerpt": "From a small online store to one of Ghana's most trusted footwear retailers, S&S Fashion's journey is nothing short of inspiring. We dive deep into how this local brand is competing with international giants.",
+      "url": "#",
+      "logo": ""
+    },
+    {
+      "title": "10 Ghanaian Brands You Need to Watch in 2026",
+      "publication": "Business Insider Africa",
+      "date": "2026-07-22",
+      "excerpt": "S&S Fashion makes the list of ten innovative Ghanaian brands reshaping retail. Their focus on authenticity and customer experience sets them apart in a crowded market.",
+      "url": "#",
+      "logo": ""
+    },
+    {
+      "title": "The Rise of Authentic Footwear in West Africa",
+      "publication": "Fashion Ghana Magazine",
+      "date": "2026-06-15",
+      "excerpt": "As counterfeit products flood the market, brands like S&S Fashion are building trust through transparency and guaranteed authenticity. A look at the changing landscape.",
+      "url": "#",
+      "logo": ""
+    },
+    {
+      "title": "S&S Fashion Partners with Local Artisans for Limited Edition Collection",
+      "publication": "Ghana Web",
+      "date": "2026-05-08",
+      "excerpt": "In a move that celebrates Ghanaian craftsmanship, S&S Fashion has partnered with local artisans to create a limited-edition collection blending traditional motifs with modern sneaker design.",
+      "url": "#",
+      "logo": ""
+    },
+    {
+      "title": "E-Commerce in Ghana: The Brands Leading the Digital Revolution",
+      "publication": "Disrupt Africa",
+      "date": "2026-04-12",
+      "excerpt": "S&S Fashion's seamless online shopping experience and nationwide delivery network make them a standout in Ghana's growing e-commerce ecosystem.",
+      "url": "#",
+      "logo": ""
+    },
+    {
+      "title": "From Sneaker Enthusiasts to Business Partners: The S&S Story",
+      "publication": "Citi Business News",
+      "date": "2026-03-05",
+      "excerpt": "The founders of S&S Fashion share their journey from passionate sneaker collectors to building one of Ghana's most beloved footwear brands. An inspiring founder story.",
+      "url": "#",
+      "logo": ""
+    }
+  ],
+  "stats": [
+    { "value": "50+", "label": "Media Features" },
+    { "value": "20+", "label": "Countries Reached" },
+    { "value": "100K+", "label": "Social Media Following" },
+    { "value": "4.8", "label": "Average Rating" }
+  ],
+  "contact": {
+    "email": "press@ssfashion.com",
+    "phone": "+233 24 123 4567",
+    "name": "Ama Serwaa, Head of Communications"
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "hero": {
+    "title": "Track Your Order",
+    "subtitle": "Enter your order details to get real-time updates on your delivery"
+  },
+  "howItWorks": [
+    {
+      "step": 1,
+      "title": "Enter Details",
+      "description": "Input your order number and the email address used for the purchase",
+      "icon": "document"
+    },
+    {
+      "step": 2,
+      "title": "View Status",
+      "description": "See your current order status and estimated delivery date",
+      "icon": "calendar"
+    },
+    {
+      "step": 3,
+      "title": "Track Progress",
+      "description": "Follow your package journey from our warehouse to your doorstep",
+      "icon": "truck"
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What is my order number?",
+      "answer": "Your order number is the unique identifier sent to you via email confirmation (format: SSF-XXXXXX). You can also find it in your account under 'My Orders'."
+    },
+    {
+      "question": "Why can't I find my order?",
+      "answer": "Please check that you've entered the correct order number and email address. If you recently placed your order, it may take up to 2 hours to appear in the system. Contact support if the issue persists."
+    },
+    {
+      "question": "My order shows 'Delivered' but I haven't received it.",
+      "answer": "Check with neighbors or building reception. Our courier may have left it in a safe place. If still missing after 24 hours, contact us at support@ssfashion.com with your order number."
+    },
+    {
+      "question": "Can I change the delivery address?",
+      "answer": "If your order hasn't been dispatched yet, contact us immediately. Once dispatched, address changes may not be possible but we can try to intercept with our courier partner."
+    },
+    {
+      "question": "What do the statuses mean?",
+      "answer": "<strong>Processing:</strong> Order confirmed, items being prepared.<br/><strong>Dispatched:</strong> Package handed to courier.<br/><strong>In Transit:</strong> Package on the way to your city.<br/><strong>Out for Delivery:</strong> Courier has the package for today's delivery.<br/><strong>Delivered:</strong> Package delivered to your address."
+    }
+  ],
+  "mockOrders": [
+    {
+      "orderNumber": "SSF-123456",
+      "email": "customer@example.com",
+      "status": "Delivered"
+    },
+    {
+      "orderNumber": "SSF-789012",
+      "email": "john@example.com",
+      "status": "In Transit"
+    },
+    {
+      "orderNumber": "SSF-345678",
+      "email": "jane@example.com",
+      "status": "Processing"
+    },
+    {
+      "orderNumber": "SSF-901234",
+      "email": "mike@example.com",
+      "status": "Out for Delivery"
+    }
+  ]
+}
