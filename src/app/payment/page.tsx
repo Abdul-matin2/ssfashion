@@ -127,7 +127,7 @@ function PaymentContent() {
   }
 
   // Payment was cancelled/abandoned/failed - no order was created
-  const isCancelled = error?.includes("cancelled") || error?.includes("cancelled");
+  const isCancelled = error?.toLowerCase().includes("cancelled") || error?.toLowerCase().includes("abandoned");
 
   return (
     <div className="min-h-screen bg-white px-4 py-12">
