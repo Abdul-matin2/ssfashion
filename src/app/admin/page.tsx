@@ -4,17 +4,69 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/utils";
 import { getProducts, getFeaturedProducts, getNewProducts, getBrands, getCategories } from "@/lib/supabase/queries";
-import { readFile } from "fs/promises";
-import path from "path";
+import { createAdminClient } from "@/lib/supabase/server";
 import { Order } from "@/types/product";
-
-const ORDERS_FILE = path.join(process.cwd(), "src", "data", "orders.json");
 
 async function readOrders(): Promise<Order[]> {
   try {
-    const data = await readFile(ORDERS_FILE, "utf-8");
-    return JSON.parse(data);
-  } catch {
+    const supabase = await createAdminClient();
+    const { data: orders, error } = await supabase
+      .from("orders")
+      .select(`
+        *,
+        order_items (
+          id,
+          product_id,
+          name,
+          image_url,
+          size,
+          color,
+          qty,
+          price
+        )
+      `)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error reading orders:", error);
+      return [];
+    }
+
+    // Transform to match Order interface
+    return (orders || []).map((order: any) => ({
+      id: order.id,
+      items: (order.order_items || []).map((item: any) => ({
+        productId: item.product_id || "",
+        name: item.name,
+        brand: "",
+        image: item.image_url || "",
+        price: item.price,
+        quantity: item.qty,
+        size: item.size,
+        color: item.color,
+        colorHex: undefined,
+      })),
+      shipping: {
+        email: order.customer_email || "",
+        firstName: order.customer_name?.split(" ")[0] || "",
+        lastName: order.customer_name?.split(" ").slice(1).join(" ") || "",
+        phone: order.customer_phone || "",
+        address: order.shipping_address?.address || "",
+        city: order.shipping_address?.city || "",
+        region: order.shipping_address?.region || "",
+        notes: "",
+      },
+      paymentMethod: order.payment_method,
+      subtotal: order.subtotal,
+      shippingFee: order.delivery_fee,
+      total: order.total,
+      status: order.status,
+      paymentStatus: order.payment_status || "pending",
+      createdAt: order.created_at,
+      updatedAt: order.updated_at,
+    }));
+  } catch (error) {
+    console.error("Error reading orders:", error);
     return [];
   }
 }
