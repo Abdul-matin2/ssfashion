@@ -8,7 +8,6 @@ import { Navigation } from "./Navigation";
 import { SearchBar } from "./SearchBar";
 import { CartIcon } from "./CartIcon";
 import { WishlistIcon } from "./WishlistIcon";
-import { CartDrawer } from "./CartDrawer";
 import { useUserProfile } from "@/context/UserProfileContext";
 import { cn } from "@/lib/utils";
 
@@ -57,7 +56,6 @@ function AccountLink() {
 
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isCartOpen, setIsCartOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [openMobileDropdown, setOpenMobileDropdown] = useState<string | null>(null);
 
@@ -130,10 +128,7 @@ export function Header() {
               </div>
 
               <WishlistIcon />
-              <CartIcon
-                asButton
-                onClick={() => setIsCartOpen(true)}
-              />
+              <CartIcon />
               {/* Account/Profile */}
               <AccountLink />
             </div>
@@ -245,9 +240,6 @@ export function Header() {
           />
         )}
       </div>
-
-      {/* Cart Drawer */}
-      <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
     </header>
   );
 }
