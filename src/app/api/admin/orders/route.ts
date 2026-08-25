@@ -151,22 +151,24 @@ export async function POST(request: NextRequest) {
       console.error("Error creating order items:", itemsError);
     }
 
-    // Send admin email notification
-    await sendAdminNewOrderEmail({
-      orderId: newOrder.id,
-      customerName,
-      customerPhone: shipping.phone,
-      customerEmail: shipping.email,
-      total,
-      items: items.map((item: OrderItem) => ({
-        name: item.name,
-        size: item.size,
-        qty: item.quantity,
-        price: item.price,
-      })),
-      shippingAddress: `${shipping.address}, ${shipping.city}, ${shipping.region}`,
-      paymentMethod,
-    });
+    // Send admin email notification only for COD orders (online payments wait for payment confirmation)
+    if (paymentMethod === "cod") {
+      await sendAdminNewOrderEmail({
+        orderId: newOrder.id,
+        customerName,
+        customerPhone: shipping.phone,
+        customerEmail: shipping.email,
+        total,
+        items: items.map((item: OrderItem) => ({
+          name: item.name,
+          size: item.size,
+          qty: item.quantity,
+          price: item.price,
+        })),
+        shippingAddress: `${shipping.address}, ${shipping.city}, ${shipping.region}`,
+        paymentMethod,
+      });
+    }
 
     // Transform response to match Order interface
     const responseOrder: Order = {

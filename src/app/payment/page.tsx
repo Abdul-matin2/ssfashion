@@ -50,13 +50,26 @@ function PaymentContent() {
           router.push(
             `/order-confirmation?method=${method}&total=${total}&orderId=${orderId}&paid=true`
           );
-        } else {
-          // Payment failed or pending - update order payment status
+        } else if (data.status === "abandoned" || data.status === "cancelled") {
+          // Payment was cancelled/abandoned by user - order should be cancelled
           try {
             await fetch(`/api/admin/orders/${orderId}`, {
               method: "PATCH",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ paymentStatus: data.status === "abandoned" ? "cancelled" : "failed" }),
+              body: JSON.stringify({ paymentStatus: "cancelled" }),
+            });
+          } catch {
+            console.error("Failed to update order payment status");
+          }
+          setError("Payment was cancelled. Your order has been cancelled.");
+          setIsProcessing(false);
+        } else {
+          // Payment failed - update order payment status
+          try {
+            await fetch(`/api/admin/orders/${orderId}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ paymentStatus: "failed" }),
             });
           } catch {
             console.error("Failed to update order payment status");

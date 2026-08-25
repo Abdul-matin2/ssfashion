@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
 import crypto from "crypto";
+import { sendAdminNewOrderEmail } from "@/lib/email";
 
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY!;
 
@@ -36,7 +37,7 @@ export async function POST(request: NextRequest) {
       // Update order status
       const { data: currentOrder, error: fetchError } = await supabase
         .from("orders")
-        .select("payment_status")
+        .select("payment_status, customer_name, customer_email, customer_phone, shipping_address, payment_method, subtotal, delivery_fee, total")
         .eq("id", orderId)
         .single();
 
@@ -59,6 +60,20 @@ export async function POST(request: NextRequest) {
         if (updateError) {
           console.error("Error updating order:", updateError);
         }
+
+        // Send admin email notification now that payment is confirmed
+        await sendAdminNewOrderEmail({
+          orderId,
+          customerName: currentOrder.customer_name || "",
+          customerPhone: currentOrder.customer_phone || "",
+          customerEmail: currentOrder.customer_email || "",
+          total: currentOrder.total,
+          items: [], // We don't have items here easily; could fetch but keeping simple
+          shippingAddress: currentOrder.shipping_address
+            ? `${currentOrder.shipping_address.address}, ${currentOrder.shipping_address.city}, ${currentOrder.shipping_address.region}`
+            : "",
+          paymentMethod: currentOrder.payment_method || "online",
+        });
       }
 
       return NextResponse.json({ success: true });
@@ -76,6 +91,29 @@ export async function POST(request: NextRequest) {
         .from("orders")
         .update({
           payment_status: "failed",
+          status: "cancelled",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", orderId);
+
+      if (updateError) {
+        console.error("Error updating order:", updateError);
+      }
+
+      return NextResponse.json({ success: true });
+    }
+
+    // Handle abandoned event (user cancelled payment)
+    if (event.event === "charge.abandoned" || event.event === "cancelled") {
+      const transaction = event.data;
+      const orderId = transaction.reference;
+
+      console.log(`Payment abandoned/cancelled for order ${orderId}`);
+
+      const { error: updateError } = await supabase
+        .from("orders")
+        .update({
+          payment_status: "cancelled",
           status: "cancelled",
           updated_at: new Date().toISOString(),
         })

@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json([]);
     }
 
-    // Get orders for this user with order items
+    // Get orders for this user with order items (exclude cancelled/failed orders)
     const { data: orders, error } = await supabase
       .from("orders")
       .select(`
@@ -43,6 +43,7 @@ export async function GET(request: NextRequest) {
         )
       `)
       .eq("user_id", profile.id)
+      .not("status", "in", "('cancelled','failed')")
       .order("created_at", { ascending: false });
 
     if (error) {
