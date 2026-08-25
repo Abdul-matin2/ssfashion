@@ -262,14 +262,20 @@ export async function PATCH(
       newOrderStatus = "cancelled";
     }
 
+    // Build update object - include paymentReference if provided
+    const updateData: any = {
+      payment_status: newPaymentStatus,
+      status: newOrderStatus,
+      updated_at: new Date().toISOString(),
+    };
+    if (body.paymentReference) {
+      updateData.payment_reference = body.paymentReference;
+    }
+
     // Update order
     const { data: updatedOrder, error: updateError } = await supabase
       .from("orders")
-      .update({
-        payment_status: newPaymentStatus,
-        status: newOrderStatus,
-        updated_at: new Date().toISOString(),
-      })
+      .update(updateData)
       .eq("id", id)
       .select()
       .single();

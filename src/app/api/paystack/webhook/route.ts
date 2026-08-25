@@ -35,7 +35,11 @@ export async function POST(request: NextRequest) {
       const channel = transaction.channel;
       const metadata = transaction.metadata || {};
 
-      console.log(`Payment successful for reference ${reference} via ${channel}`, { metadata: Object.keys(metadata) });
+      console.log(`[Webhook] Payment successful for reference ${reference} via ${channel}`, {
+        metadataKeys: Object.keys(metadata),
+        hasItems: !!metadata.items,
+        isTempRef: reference.startsWith("CHK-")
+      });
 
       // Check if this is a temp reference (CHK-...) meaning order needs to be created
       if (reference.startsWith("CHK-") && metadata.items) {
@@ -69,9 +73,11 @@ export async function POST(request: NextRequest) {
           .single();
 
         if (orderError) {
-          console.error("Error creating order after payment:", orderError);
+          console.error("[Webhook] Error creating order after payment:", orderError);
           return NextResponse.json({ error: "Failed to create order" }, { status: 500 });
         }
+
+        console.log("[Webhook] Order created:", newOrder.id);
 
         // Insert order items
         const orderItems = (metadata.items || []).map((item: any) => ({
@@ -87,30 +93,37 @@ export async function POST(request: NextRequest) {
 
         const { error: itemsError } = await supabase.from("order_items").insert(orderItems);
         if (itemsError) {
-          console.error("Error creating order items:", itemsError);
+          console.error("[Webhook] Error creating order items:", itemsError);
+        } else {
+          console.log("[Webhook] Order items inserted");
         }
 
         // Send admin email notification now that order is created and paid
-        console.log("Sending admin email for new order:", newOrder.id);
-        await sendAdminNewOrderEmail({
-          orderId: newOrder.id,
-          customerName,
-          customerPhone: metadata.shipping?.phone || "",
-          customerEmail: metadata.shipping?.email || "",
-          total: metadata.total,
-          items: metadata.items.map((item: any) => ({
-            name: item.name,
-            size: item.size,
-            qty: item.quantity,
-            price: item.price,
-          })),
-          shippingAddress: metadata.shipping
-            ? `${metadata.shipping.address}, ${metadata.shipping.city}, ${metadata.shipping.region}`
-            : "",
-          paymentMethod: metadata.paymentMethod,
-        });
+        console.log("[Webhook] Sending admin email for new order:", newOrder.id);
+        try {
+          const emailResult = await sendAdminNewOrderEmail({
+            orderId: newOrder.id,
+            customerName,
+            customerPhone: metadata.shipping?.phone || "",
+            customerEmail: metadata.shipping?.email || "",
+            total: metadata.total,
+            items: metadata.items.map((item: any) => ({
+              name: item.name,
+              size: item.size,
+              qty: item.quantity,
+              price: item.price,
+            })),
+            shippingAddress: metadata.shipping
+              ? `${metadata.shipping.address}, ${metadata.shipping.city}, ${metadata.shipping.region}`
+              : "",
+            paymentMethod: metadata.paymentMethod,
+          });
+          console.log("[Webhook] Admin email result:", emailResult);
+        } catch (emailError) {
+          console.error("[Webhook] Admin email failed:", emailError);
+        }
 
-        console.log(`Order ${newOrder.id} created and paid via webhook`);
+        console.log(`[Webhook] Order ${newOrder.id} created and paid via webhook`);
       } else {
         // Existing order reference - just update payment status
         const { data: currentOrder, error: fetchError } = await supabase
@@ -120,12 +133,12 @@ export async function POST(request: NextRequest) {
           .single();
 
         if (fetchError || !currentOrder) {
-          console.error(`Order ${reference} not found`);
+          console.error(`[Webhook] Order ${reference} not found`);
           return NextResponse.json({ error: "Order not found" }, { status: 404 });
         }
 
         if (currentOrder.payment_status !== "paid") {
-          console.log(`Updating existing order ${reference} payment_status to paid`);
+          console.log(`[Webhook] Updating existing order ${reference} payment_status to paid`);
           const { error: updateError } = await supabase
             .from("orders")
             .update({
@@ -136,7 +149,7 @@ export async function POST(request: NextRequest) {
             .eq("id", reference);
 
           if (updateError) {
-            console.error("Error updating order:", updateError);
+            console.error("[Webhook] Error updating order:", updateError);
           }
         }
       }
@@ -150,11 +163,14 @@ export async function POST(request: NextRequest) {
       const reference = transaction.reference;
       const gatewayResponse = transaction.gateway_response;
 
-      console.log(`Payment failed for reference ${reference}: ${gatewayResponse}`);
+      console.log(`[Webhook] Payment failed for reference ${reference}: ${gatewayResponse}`, {
+        isTempRef: reference.startsWith("CHK-"),
+        status: transaction.status
+      });
 
       // If it's an existing order (not CHK-), update it
       if (!reference.startsWith("CHK-")) {
-        console.log(`Updating existing order ${reference} to failed/cancelled`);
+        console.log(`[Webhook] Updating existing order ${reference} to failed/cancelled`);
         const { error: updateError } = await supabase
           .from("orders")
           .update({
@@ -165,10 +181,10 @@ export async function POST(request: NextRequest) {
           .eq("id", reference);
 
         if (updateError) {
-          console.error("Error updating order:", updateError);
+          console.error("[Webhook] Error updating order:", updateError);
         }
       } else {
-        console.log(`CHK- reference ${reference} failed - no order to update (correct behavior)`);
+        console.log(`[Webhook] CHK- reference ${reference} failed - no order to update (correct behavior)`);
       }
 
       return NextResponse.json({ success: true });
@@ -179,11 +195,15 @@ export async function POST(request: NextRequest) {
       const transaction = event.data;
       const reference = transaction.reference;
 
-      console.log(`Payment abandoned/cancelled for reference ${reference}`);
+      console.log(`[Webhook] Payment abandoned/cancelled for reference ${reference}`, {
+        isTempRef: reference.startsWith("CHK-"),
+        event: event.event,
+        status: transaction.status
+      });
 
       // If it's an existing order (not CHK-), update it
       if (!reference.startsWith("CHK-")) {
-        console.log(`Updating existing order ${reference} to cancelled`);
+        console.log(`[Webhook] Updating existing order ${reference} to cancelled`);
         const { error: updateError } = await supabase
           .from("orders")
           .update({
@@ -194,10 +214,10 @@ export async function POST(request: NextRequest) {
           .eq("id", reference);
 
         if (updateError) {
-          console.error("Error updating order:", updateError);
+          console.error("[Webhook] Error updating order:", updateError);
         }
       } else {
-        console.log(`CHK- reference ${reference} abandoned/cancelled - no order to update (correct behavior)`);
+        console.log(`[Webhook] CHK- reference ${reference} abandoned/cancelled - no order to update (correct behavior)`);
       }
 
       return NextResponse.json({ success: true });

@@ -65,10 +65,87 @@ function OrderConfirmationContent() {
         // Online payment - wait for webhook to create order, then find it
         // We'll poll for a bit to find the order
         let attempts = 0;
-        const maxAttempts = 20; // 20 seconds max
+        const maxAttempts = 30; // 30 seconds max
 
         const pollForOrder = async () => {
           if (attempts >= maxAttempts) {
+            // Fallback: Create order if webhook didn't fire
+            console.log("[OrderConfirmation] Webhook didn't create order, attempting fallback creation...", { reference });
+            try {
+              const verifyResponse = await fetch(`/api/paystack/verify?reference=${reference}`);
+              const verifyData = await verifyResponse.json();
+
+              console.log("[OrderConfirmation] Fallback verify data:", {
+                success: verifyData.success,
+                hasMetadata: !!verifyData.metadata,
+                hasItems: !!verifyData.metadata?.items,
+                paymentStatus: verifyData.metadata?.paymentStatus,
+                status: verifyData.status
+              });
+
+              if (verifyData.success && verifyData.metadata?.items) {
+                const createResponse = await fetch("/api/admin/orders", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    items: verifyData.metadata.items,
+                    shipping: verifyData.metadata.shipping,
+                    paymentMethod: verifyData.metadata.paymentMethod,
+                    subtotal: verifyData.metadata.subtotal,
+                    shippingFee: verifyData.metadata.shippingFee,
+                    total: verifyData.metadata.total,
+                  }),
+                });
+
+                if (createResponse.ok) {
+                  const createdOrder = await createResponse.json();
+                  console.log("[OrderConfirmation] Fallback order created:", createdOrder.id);
+                  // Update payment status and reference
+                  const patchResponse = await fetch(`/api/admin/orders/${createdOrder.id}`, {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ paymentStatus: "paid", paymentReference: reference }),
+                  });
+                  console.log("[OrderConfirmation] Patch response:", patchResponse.ok);
+
+                  // Send admin email
+                  console.log("[OrderConfirmation] Sending admin email for fallback order");
+                  const emailResponse = await fetch("/api/admin/send-order-email", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      orderId: createdOrder.id,
+                      customerName: verifyData.metadata?.shipping
+                        ? `${verifyData.metadata.shipping.firstName} ${verifyData.metadata.shipping.lastName}`
+                        : "",
+                      customerPhone: verifyData.metadata?.shipping?.phone || "",
+                      customerEmail: verifyData.metadata?.shipping?.email || "",
+                      total: verifyData.metadata?.total,
+                      items: verifyData.metadata?.items?.map((item: any) => ({
+                        name: item.name,
+                        size: item.size,
+                        qty: item.quantity,
+                        price: item.price,
+                      })) || [],
+                      shippingAddress: verifyData.metadata?.shipping
+                        ? `${verifyData.metadata.shipping.address}, ${verifyData.metadata.shipping.city}, ${verifyData.metadata.shipping.region}`
+                        : "",
+                      paymentMethod: verifyData.metadata?.paymentMethod,
+                    }),
+                  });
+                  const emailResult = await emailResponse.json();
+                  console.log("[OrderConfirmation] Admin email result:", emailResult);
+
+                  setOrder(createdOrder);
+                  return;
+                } else {
+                  console.error("[OrderConfirmation] Fallback create order failed:", await createResponse.text());
+                }
+              }
+            } catch (err) {
+              console.error("[OrderConfirmation] Fallback order creation failed:", err);
+            }
+
             setError("Order is being processed. Please check your account page in a moment.");
             setIsLoadingOrder(false);
             return;
@@ -124,6 +201,13 @@ function OrderConfirmationContent() {
       });
     }
   }, [isClient, orderId, order, method, total]);
+
+  // Debug: Log order creation attempts
+  useEffect(() => {
+    if (isClient && reference && paid && !order) {
+      console.log("[OrderConfirmation] Waiting for order creation via webhook or fallback...", { reference, method, total });
+    }
+  }, [isClient, reference, paid, order, method, total]);
 
   if (!isClient) {
     return (

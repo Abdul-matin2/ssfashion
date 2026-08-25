@@ -36,7 +36,7 @@ function PaymentContent() {
         const response = await fetch(`/api/paystack/verify?reference=${reference}`);
         const data = await response.json();
 
-        console.log("Paystack verify response:", data);
+        console.log("Paystack verify response:", JSON.stringify(data, null, 2));
         setStatus(data.status || "unknown");
 
         if (data.success) {
@@ -46,9 +46,9 @@ function PaymentContent() {
             `/order-confirmation?method=${method}&total=${total}&reference=${reference}&paid=true`
           );
           return;
-        } else if (data.status === "abandoned" || data.status === "cancelled") {
+        } else if (data.status === "abandoned" || data.status === "cancelled" || data.status === "cancel") {
           // Payment was cancelled/abandoned by user - NO order was created
-          console.log("Payment cancelled/abandoned detected, status:", data.status);
+          console.log("Payment cancelled/abandoned detected, status:", data.status, "gatewayResponse:", data.gatewayResponse);
           setError("Payment was cancelled. No order was placed.");
           setIsProcessing(false);
         } else if (data.status === "failed") {
@@ -57,8 +57,9 @@ function PaymentContent() {
           setError(data.gatewayResponse || `Payment failed (status: ${data.status}). Please try again.`);
           setIsProcessing(false);
         } else {
-          // Any other non-success status
+          // Any other non-success status (e.g., "pending", "reversed")
           console.log("Payment not successful, status:", data.status, "gatewayResponse:", data.gatewayResponse);
+          // Treat non-success statuses as cancelled for CHK- references (no order created)
           setError(data.gatewayResponse || `Payment was not successful (status: ${data.status}). Please try again.`);
           setIsProcessing(false);
         }
@@ -97,7 +98,7 @@ function PaymentContent() {
   }
 
   // Payment was cancelled/abandoned/failed - no order was created
-  const isCancelled = error?.toLowerCase().includes("cancelled") || error?.toLowerCase().includes("abandoned");
+  const isCancelled = error?.toLowerCase().includes("cancelled") || error?.toLowerCase().includes("abandoned") || error?.toLowerCase().includes("cancel");
 
   return (
     <div className="min-h-screen bg-white px-4 py-12">

@@ -15,6 +15,8 @@ export async function POST(request: NextRequest) {
       paymentMethod,
     } = body;
 
+    console.log("[send-order-email] Request received:", { orderId, customerName, hasItems: !!items, paymentMethod });
+
     if (!orderId) {
       return NextResponse.json(
         { error: "Missing orderId" },
@@ -22,7 +24,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await sendAdminNewOrderEmail({
+    const result = await sendAdminNewOrderEmail({
       orderId,
       customerName,
       customerPhone,
@@ -33,9 +35,11 @@ export async function POST(request: NextRequest) {
       paymentMethod,
     });
 
-    return NextResponse.json({ success: true });
+    console.log("[send-order-email] Email result:", result);
+
+    return NextResponse.json({ success: true, emailSent: result });
   } catch (error) {
-    console.error("Error sending admin order email:", error);
+    console.error("[send-order-email] Error:", error);
     return NextResponse.json(
       { error: "Failed to send email" },
       { status: 500 }
