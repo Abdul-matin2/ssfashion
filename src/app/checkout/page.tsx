@@ -151,9 +151,19 @@ export default function CheckoutPage() {
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [rates, setRates] = useState<ShippingRate[]>(DEFAULT_RATES);
   const [ratesLoaded, setRatesLoaded] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
     setIsClient(true);
+  }, []);
+
+  // Get user ID from Supabase for order creation
+  useEffect(() => {
+    import("@/lib/supabase/auth").then(({ getUser }) => {
+      getUser().then((user) => {
+        if (user) setUserId(user.id);
+      });
+    });
   }, []);
 
   // Fetch shipping rates from admin config
@@ -275,18 +285,26 @@ export default function CheckoutPage() {
         total,
       };
 
-      // Create order via API
-      const response = await fetch("/api/admin/orders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(orderData),
-      });
+      // For online payments (momo, card), initialize Paystack FIRST, don't create order yet
+      // For COD, create order immediately
+      let newOrder;
+      let orderCreated = false;
 
-      if (!response.ok) {
-        throw new Error("Failed to create order");
+      if (paymentMethod === "cod") {
+        // Create order immediately for COD
+        const response = await fetch("/api/admin/orders", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(orderData),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to create order");
+        }
+
+        newOrder = await response.json();
+        orderCreated = true;
       }
-
-      const newOrder = await response.json();
 
       // Admin notification is now created server-side via API
       // (includes database persistence + email via Resend)
@@ -296,22 +314,30 @@ export default function CheckoutPage() {
 
       clearCart();
 
-      // For online payments (momo, card), redirect to Paystack
+      // For online payments (momo, card), redirect to Paystack WITHOUT creating order yet
       if (paymentMethod === "momo" || paymentMethod === "card") {
-        const callbackUrl = `${window.location.origin}/payment?orderId=${newOrder.id}&method=${paymentMethod}&total=${total}`;
+        // Generate a temporary reference for this checkout session
+        const tempReference = `CHK-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+
+        const callbackUrl = `${window.location.origin}/payment?reference=${tempReference}&method=${paymentMethod}&total=${total}`;
         const initResponse = await fetch("/api/paystack/initialize", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             email: form.email,
             amount: total, // in pesewas
-            orderId: newOrder.id,
+            orderId: tempReference, // Use temp reference
             callbackUrl,
             metadata: {
-              orderId: newOrder.id,
+              // Store full order data in metadata for later creation
+              items: orderData.items,
+              shipping: orderData.shipping,
               paymentMethod,
-              customerName: `${form.firstName} ${form.lastName}`,
-              customerPhone: form.phone,
+              subtotal,
+              shippingFee: shipping,
+              total,
+              tempReference,
+              userId: userId, // Include user ID for order creation
             },
             channels: paymentMethod === "momo" ? ["mobile_money"] : ["card", "mobile_money"],
           }),
