@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createAdminClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { sendAdminNewOrderEmail } from "@/lib/email";
 import { Order, OrderItem, ShippingAddress } from "@/types/product";
 
-// GET /api/admin/orders — List all orders
+// GET /api/admin/orders — List all orders (admin only)
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createAdminClient();
@@ -89,10 +89,14 @@ export async function GET(request: NextRequest) {
 // POST /api/admin/orders — Create new order (used by checkout)
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createAdminClient();
+    // Use regular client to get user session (has access to cookies)
+    const supabase = await createClient();
     const body = await request.json();
 
     const { items, shipping, paymentMethod, subtotal, shippingFee, total } = body;
+
+    // Get current user from session (for logged-in users)
+    const { data: { user } } = await supabase.auth.getUser();
 
     // Generate new order ID (ORD-XXX format)
     const { data: maxOrder, error: maxError } = await supabase
@@ -114,11 +118,13 @@ export async function POST(request: NextRequest) {
     const now = new Date().toISOString();
     const customerName = `${shipping.firstName} ${shipping.lastName}`;
 
-    // Insert order
-    const { data: newOrder, error: orderError } = await supabase
+    // Insert order using admin client (bypasses RLS for order creation)
+    const adminSupabase = await createAdminClient();
+    const { data: newOrder, error: orderError } = await adminSupabase
       .from("orders")
       .insert({
         id: orderId,
+        user_id: user?.id || null, // Link order to authenticated user
         items: items, // Store full items as JSONB
         subtotal,
         delivery_fee: shippingFee,

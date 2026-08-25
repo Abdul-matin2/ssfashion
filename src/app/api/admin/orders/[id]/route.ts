@@ -155,6 +155,38 @@ export async function PUT(
       estimatedDelivery: body.estimatedDelivery,
     });
 
+    // Create customer notification in database
+    const statusNotifications: Record<string, { title: string; message: string }> = {
+      processing: {
+        title: "Order is being processed",
+        message: "Your order is now being prepared for shipment.",
+      },
+      shipped: {
+        title: "Order shipped!",
+        message: "Your order has been shipped and is on its way to you.",
+      },
+      delivered: {
+        title: "Order delivered",
+        message: "Your order has been delivered. Enjoy your purchase!",
+      },
+      cancelled: {
+        title: "Order cancelled",
+        message: "Your order has been cancelled. Contact support for details.",
+      },
+    };
+
+    const notificationData = statusNotifications[newStatus];
+    if (notificationData) {
+      await supabase.from("notifications").insert({
+        type: "order_status",
+        order_id: updatedOrder.id,
+        user_id: updatedOrder.user_id,
+        title: notificationData.title,
+        message: notificationData.message,
+        is_read: false,
+      });
+    }
+
     // Transform response
     const responseOrder: Order = {
       id: updatedOrder.id,
@@ -258,6 +290,38 @@ export async function PATCH(
         customerEmail: currentOrder.customer_email || "",
         newStatus: newOrderStatus,
       });
+
+      // Create customer notification in database
+      const statusNotifications: Record<string, { title: string; message: string }> = {
+        processing: {
+          title: "Order is being processed",
+          message: "Your order is now being prepared for shipment.",
+        },
+        shipped: {
+          title: "Order shipped!",
+          message: "Your order has been shipped and is on its way to you.",
+        },
+        delivered: {
+          title: "Order delivered",
+          message: "Your order has been delivered. Enjoy your purchase!",
+        },
+        cancelled: {
+          title: "Order cancelled",
+          message: "Your order has been cancelled. Contact support for details.",
+        },
+      };
+
+      const notificationData = statusNotifications[newOrderStatus];
+      if (notificationData) {
+        await supabase.from("notifications").insert({
+          type: "order_status",
+          order_id: updatedOrder.id,
+          user_id: updatedOrder.user_id,
+          title: notificationData.title,
+          message: notificationData.message,
+          is_read: false,
+        });
+      }
     }
 
     // Transform response

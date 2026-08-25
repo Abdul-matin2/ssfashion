@@ -256,11 +256,13 @@ export default function AccountPage() {
   }, []);
 
   // Check if user is logged in (has profile data)
+  // Wait for profile to load from Supabase before redirecting
   useEffect(() => {
-    if (isClient && !profile.email && !profile.firstName) {
+    if (isClient && !profile.email && !profile.firstName && !ordersLoading) {
+      // Only redirect if we've loaded orders (meaning we had a chance to sync with Supabase)
       router.push("/sign-in");
     }
-  }, [isClient, profile, router]);
+  }, [isClient, profile, router, ordersLoading]);
 
   // Fetch orders from API
   useEffect(() => {
