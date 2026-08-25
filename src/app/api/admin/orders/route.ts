@@ -98,32 +98,15 @@ export async function POST(request: NextRequest) {
     // Get current user from session (for logged-in users)
     const { data: { user } } = await supabase.auth.getUser();
 
-    // Generate new order ID (ORD-XXX format)
-    const { data: maxOrder, error: maxError } = await supabase
-      .from("orders")
-      .select("id")
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .single();
-
-    let nextId = 1;
-    if (maxOrder?.id) {
-      const match = maxOrder.id.match(/ORD-(\d+)/);
-      if (match) {
-        nextId = parseInt(match[1]) + 1;
-      }
-    }
-    const orderId = `ORD-${nextId.toString().padStart(3, "0")}`;
-
     const now = new Date().toISOString();
     const customerName = `${shipping.firstName} ${shipping.lastName}`;
 
     // Insert order using admin client (bypasses RLS for order creation)
+    // Let database handle ID generation via default (ORD-XXXXXX format)
     const adminSupabase = await createAdminClient();
     const { data: newOrder, error: orderError } = await adminSupabase
       .from("orders")
       .insert({
-        id: orderId,
         user_id: user?.id || null, // Link order to authenticated user
         items: items, // Store full items as JSONB
         subtotal,
@@ -153,7 +136,7 @@ export async function POST(request: NextRequest) {
 
     // Insert order items
     const orderItems = items.map((item: OrderItem) => ({
-      order_id: orderId,
+      order_id: newOrder.id,
       product_id: item.productId,
       name: item.name,
       image_url: typeof item.image === "object" ? item.image.url : item.image,
@@ -163,7 +146,7 @@ export async function POST(request: NextRequest) {
       price: item.price,
     }));
 
-    const { error: itemsError } = await supabase.from("order_items").insert(orderItems);
+    const { error: itemsError } = await adminSupabase.from("order_items").insert(orderItems);
     if (itemsError) {
       console.error("Error creating order items:", itemsError);
     }
