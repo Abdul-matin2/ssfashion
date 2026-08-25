@@ -1,0 +1,25 @@
+{
+  "buildCommand": "npm run build",
+  "devCommand": "npm run dev",
+  "installCommand": "npm install",
+  "framework": "nextjs",
+  "regions": ["iad1"],
+  "functions": {
+    "src/app/api/**/*.ts": {
+      "maxDuration": 30
+    }
+  },
+  "env": {
+    "NEXT_PUBLIC_SUPABASE_URL": "@supabase-url",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "@supabase-anon-key",
+    "SUPABASE_SERVICE_ROLE_KEY": "@supabase-service-role-key",
+    "PAYSTACK_SECRET_KEY": "@paystack-secret-key",
+    "NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY": "@paystack-public-key",
+    "RESEND_API_KEY": "@resend-api-key",
+    "ADMIN_NOTIFICATION_EMAIL": "@admin-email",
+    "NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME": "@cloudinary-cloud-name",
+    "NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET": "@cloudinary-upload-preset",
+    "CLOUDINARY_API_KEY": "@cloudinary-api-key",
+    "CLOUDINARY_API_SECRET": "@cloudinary-api-secret"
+  }
+}

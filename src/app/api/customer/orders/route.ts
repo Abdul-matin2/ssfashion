@@ -1,18 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { readFile } from "fs/promises";
-import path from "path";
-import { Order } from "@/types/product";
-
-const DATA_FILE = path.join(process.cwd(), "src", "data", "orders.json");
-
-async function readOrders(): Promise<Order[]> {
-  const data = await readFile(DATA_FILE, "utf-8");
-  return JSON.parse(data);
-}
+import { createClient } from "@/lib/supabase/server";
 
 // GET /api/customer/orders — Get orders for a customer (by email)
 export async function GET(request: NextRequest) {
   try {
+    const supabase = await createClient();
     const { searchParams } = new URL(request.url);
     const email = searchParams.get("email");
 
@@ -23,44 +15,72 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const orders = await readOrders();
+    // Get user ID from profiles
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("email", email)
+      .single();
 
-    // Filter orders by customer email
-    const customerOrders = orders.filter((o) =>
-      o.shipping.email.toLowerCase() === email.toLowerCase()
-    );
+    if (!profile) {
+      return NextResponse.json([]);
+    }
 
-    // Sort by createdAt (newest first)
-    customerOrders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    // Get orders for this user with order items
+    const { data: orders, error } = await supabase
+      .from("orders")
+      .select(`
+        *,
+        order_items (
+          id,
+          product_id,
+          name,
+          image_url,
+          size,
+          color,
+          qty,
+          price
+        )
+      `)
+      .eq("user_id", profile.id)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error reading customer orders:", error);
+      return NextResponse.json(
+        { error: "Failed to read orders" },
+        { status: 500 }
+      );
+    }
 
     // Transform to simpler format for customer view
-    const formattedOrders = customerOrders.map((order) => ({
+    const formattedOrders = (orders || []).map((order: any) => ({
       id: order.id,
-      date: new Date(order.createdAt).toLocaleDateString("en-GB", {
+      date: new Date(order.created_at).toLocaleDateString("en-GB", {
         day: "numeric",
         month: "long",
         year: "numeric",
       }),
       status: order.status,
       total: order.total,
-      items: order.items.length,
-      itemsDetail: order.items.map((item) => ({
+      items: order.order_items?.length || 0,
+      itemsDetail: (order.order_items || []).map((item: any) => ({
         name: item.name,
-        quantity: item.quantity,
+        quantity: item.qty,
         size: item.size,
         color: item.color,
         price: item.price,
-        image: item.image,
+        image: item.image_url,
       })),
       shipping: {
-        address: order.shipping.address,
-        city: order.shipping.city,
-        region: order.shipping.region,
+        address: order.shipping_address?.address || "",
+        city: order.shipping_address?.city || "",
+        region: order.shipping_address?.region || "",
       },
-      paymentMethod: order.paymentMethod,
+      paymentMethod: order.payment_method,
       subtotal: order.subtotal,
-      shippingFee: order.shippingFee,
-      createdAt: order.createdAt,
+      shippingFee: order.delivery_fee,
+      createdAt: order.created_at,
     }));
 
     return NextResponse.json(formattedOrders);

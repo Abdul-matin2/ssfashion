@@ -1,29 +1,41 @@
 import { NextRequest, NextResponse } from "next/server";
-import { readFile, writeFile } from "fs/promises";
-import path from "path";
+import { createAdminClient } from "@/lib/supabase/server";
 
-const NOTIFICATIONS_FILE = path.join(process.cwd(), "src", "data", "notifications.json");
-
-async function readNotifications(): Promise<any[]> {
-  try {
-    const data = await readFile(NOTIFICATIONS_FILE, "utf-8");
-    return JSON.parse(data);
-  } catch {
-    return [];
-  }
-}
-
-async function writeNotifications(notifications: any[]): Promise<void> {
-  await writeFile(NOTIFICATIONS_FILE, JSON.stringify(notifications, null, 2));
-}
-
-// GET /api/admin/notifications — Get all admin notifications
+// GET /api/admin/notifications — Get all admin notifications (type=new_order)
 export async function GET(_request: NextRequest) {
   try {
-    const notifications = await readNotifications();
-    // Sort by createdAt (newest first)
-    notifications.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    return NextResponse.json(notifications);
+    const supabase = await createAdminClient();
+
+    const { data: notifications, error } = await supabase
+      .from("notifications")
+      .select("*")
+      .eq("type", "new_order")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error reading admin notifications:", error);
+      return NextResponse.json(
+        { error: "Failed to read notifications" },
+        { status: 500 }
+      );
+    }
+
+    // Transform to match expected format
+    const transformed = (notifications || []).map((n: any) => ({
+      id: n.id,
+      orderId: n.order_id,
+      orderNumber: n.order_id,
+      customerName: n.title?.replace("New Order ", "") || "",
+      customerPhone: "",
+      total: 0,
+      items: [],
+      shippingAddress: "",
+      paymentMethod: "",
+      createdAt: n.created_at,
+      read: n.is_read,
+    }));
+
+    return NextResponse.json(transformed);
   } catch (error) {
     console.error("Error reading admin notifications:", error);
     return NextResponse.json(
@@ -36,27 +48,43 @@ export async function GET(_request: NextRequest) {
 // POST /api/admin/notifications — Create a new admin notification (used by order creation)
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createAdminClient();
     const body = await request.json();
 
-    const notification = {
-      id: `NTF-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
-      orderId: body.orderId,
-      orderNumber: body.orderId,
+    const { data: notification, error } = await supabase
+      .from("notifications")
+      .insert({
+        type: "new_order",
+        order_id: body.orderId,
+        user_id: null, // admin notification
+        title: `New Order ${body.orderId}`,
+        message: `${body.customerName} placed an order of GHS ${(body.total / 100).toFixed(2)}`,
+        is_read: false,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error creating admin notification:", error);
+      return NextResponse.json(
+        { error: "Failed to create notification" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      id: notification.id,
+      orderId: notification.order_id,
+      orderNumber: notification.order_id,
       customerName: body.customerName,
       customerPhone: body.customerPhone,
       total: body.total,
       items: body.items,
       shippingAddress: body.shippingAddress,
       paymentMethod: body.paymentMethod,
-      createdAt: body.createdAt || new Date().toISOString(),
-      read: false,
-    };
-
-    const notifications = await readNotifications();
-    notifications.unshift(notification);
-    await writeNotifications(notifications);
-
-    return NextResponse.json(notification, { status: 201 });
+      createdAt: notification.created_at,
+      read: notification.is_read,
+    }, { status: 201 });
   } catch (error) {
     console.error("Error creating admin notification:", error);
     return NextResponse.json(
@@ -69,21 +97,26 @@ export async function POST(request: NextRequest) {
 // PATCH /api/admin/notifications — Mark notification(s) as read
 export async function PATCH(request: NextRequest) {
   try {
+    const supabase = await createAdminClient();
     const body = await request.json();
     const { id, markAll } = body;
 
-    const notifications = await readNotifications();
-
     if (markAll) {
-      let updated = 0;
-      notifications.forEach((n) => {
-        if (!n.read) {
-          n.read = true;
-          updated++;
-        }
-      });
-      await writeNotifications(notifications);
-      return NextResponse.json({ success: true, updated });
+      const { error } = await supabase
+        .from("notifications")
+        .update({ is_read: true })
+        .eq("type", "new_order")
+        .eq("is_read", false);
+
+      if (error) {
+        console.error("Error marking all notifications as read:", error);
+        return NextResponse.json(
+          { error: "Failed to update notifications" },
+          { status: 500 }
+        );
+      }
+
+      return NextResponse.json({ success: true, updated: 0 }); // count not easily available
     }
 
     if (!id) {
@@ -93,19 +126,34 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const index = notifications.findIndex((n) => n.id === id);
+    const { data: notification, error } = await supabase
+      .from("notifications")
+      .update({ is_read: true })
+      .eq("id", id)
+      .select()
+      .single();
 
-    if (index === -1) {
+    if (error) {
+      console.error("Error marking notification as read:", error);
       return NextResponse.json(
-        { error: "Notification not found" },
-        { status: 404 }
+        { error: "Failed to update notification" },
+        { status: 500 }
       );
     }
 
-    notifications[index].read = true;
-    await writeNotifications(notifications);
-
-    return NextResponse.json(notifications[index]);
+    return NextResponse.json({
+      id: notification.id,
+      orderId: notification.order_id,
+      orderNumber: notification.order_id,
+      customerName: notification.title?.replace("New Order ", "") || "",
+      customerPhone: "",
+      total: 0,
+      items: [],
+      shippingAddress: "",
+      paymentMethod: "",
+      createdAt: notification.created_at,
+      read: notification.is_read,
+    });
   } catch (error) {
     console.error("Error marking notification as read:", error);
     return NextResponse.json(

@@ -1,26 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { readFile, writeFile } from "fs/promises";
-import path from "path";
-
-const DATA_FILE = path.join(process.cwd(), "src", "data", "notifications.json");
-
-async function readNotifications(): Promise<any[]> {
-  try {
-    const data = await readFile(DATA_FILE, "utf-8");
-    const parsed = JSON.parse(data);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (error) {
-    return [];
-  }
-}
-
-async function writeNotifications(notifications: any[]): Promise<void> {
-  await writeFile(DATA_FILE, JSON.stringify(notifications, null, 2), "utf-8");
-}
+import { createClient } from "@/lib/supabase/server";
 
 // GET /api/customer/notifications?email=user@example.com
 export async function GET(request: NextRequest) {
   try {
+    const supabase = await createClient();
     const { searchParams } = new URL(request.url);
     const email = searchParams.get("email");
 
@@ -31,12 +15,45 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const notifications = await readNotifications();
-    const userNotifications = notifications
-      .filter((n) => n.email && n.email.toLowerCase() === email.toLowerCase())
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    // First get the user's ID from profiles
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("email", email)
+      .single();
 
-    return NextResponse.json(userNotifications);
+    if (!profile) {
+      return NextResponse.json([]);
+    }
+
+    // Get notifications for this user
+    const { data: notifications, error } = await supabase
+      .from("notifications")
+      .select("*")
+      .eq("user_id", profile.id)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error reading notifications:", error);
+      return NextResponse.json(
+        { error: "Failed to read notifications" },
+        { status: 500 }
+      );
+    }
+
+    // Transform to match expected format
+    const transformed = (notifications || []).map((n: any) => ({
+      id: n.id,
+      email,
+      title: n.title,
+      message: n.message,
+      type: n.type,
+      read: n.is_read,
+      orderId: n.order_id,
+      createdAt: n.created_at,
+    }));
+
+    return NextResponse.json(transformed);
   } catch (error) {
     console.error("Error reading notifications:", error);
     return NextResponse.json(
@@ -49,6 +66,7 @@ export async function GET(request: NextRequest) {
 // POST /api/customer/notifications — Create a notification (used by admin order status changes)
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient();
     const body = await request.json();
 
     if (!body.email || !body.title || !body.message) {
@@ -58,22 +76,51 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const notification = {
-      id: `NTF-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
+    // Get user ID from email
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("email", body.email)
+      .single();
+
+    if (!profile) {
+      return NextResponse.json(
+        { error: "User not found" },
+        { status: 404 }
+      );
+    }
+
+    const { data: notification, error } = await supabase
+      .from("notifications")
+      .insert({
+        type: body.type || "order_status",
+        order_id: body.orderId || null,
+        user_id: profile.id,
+        title: body.title,
+        message: body.message,
+        is_read: false,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error creating notification:", error);
+      return NextResponse.json(
+        { error: "Failed to create notification" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      id: notification.id,
       email: body.email,
-      title: body.title,
-      message: body.message,
-      type: body.type || "order",
-      read: false,
-      orderId: body.orderId || null,
-      createdAt: new Date().toISOString(),
-    };
-
-    const notifications = await readNotifications();
-    notifications.push(notification);
-    await writeNotifications(notifications);
-
-    return NextResponse.json(notification);
+      title: notification.title,
+      message: notification.message,
+      type: notification.type,
+      read: notification.is_read,
+      orderId: notification.order_id,
+      createdAt: notification.created_at,
+    });
   } catch (error) {
     console.error("Error creating notification:", error);
     return NextResponse.json(
@@ -87,6 +134,7 @@ export async function POST(request: NextRequest) {
 // Supports single: { id, email } or bulk: { email, markAll: true }
 export async function PATCH(request: NextRequest) {
   try {
+    const supabase = await createClient();
     const body = await request.json();
     const { id, email, markAll } = body;
 
@@ -97,19 +145,36 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const notifications = await readNotifications();
+    // Get user ID from email
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("email", email)
+      .single();
+
+    if (!profile) {
+      return NextResponse.json(
+        { error: "User not found" },
+        { status: 404 }
+      );
+    }
 
     if (markAll) {
-      // Mark all notifications for this email as read
-      let updated = 0;
-      notifications.forEach((n) => {
-        if (n.email.toLowerCase() === email.toLowerCase() && !n.read) {
-          n.read = true;
-          updated++;
-        }
-      });
-      await writeNotifications(notifications);
-      return NextResponse.json({ success: true, updated });
+      const { error } = await supabase
+        .from("notifications")
+        .update({ is_read: true })
+        .eq("user_id", profile.id)
+        .eq("is_read", false);
+
+      if (error) {
+        console.error("Error marking all notifications as read:", error);
+        return NextResponse.json(
+          { error: "Failed to update notifications" },
+          { status: 500 }
+        );
+      }
+
+      return NextResponse.json({ success: true, updated: 0 });
     }
 
     if (!id) {
@@ -119,19 +184,32 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const index = notifications.findIndex((n) => n.id === id && n.email && n.email.toLowerCase() === email.toLowerCase());
+    const { data: notification, error } = await supabase
+      .from("notifications")
+      .update({ is_read: true })
+      .eq("id", id)
+      .eq("user_id", profile.id)
+      .select()
+      .single();
 
-    if (index === -1) {
+    if (error) {
+      console.error("Error marking notification as read:", error);
       return NextResponse.json(
-        { error: "Notification not found" },
-        { status: 404 }
+        { error: "Failed to update notification" },
+        { status: 500 }
       );
     }
 
-    notifications[index].read = true;
-    await writeNotifications(notifications);
-
-    return NextResponse.json(notifications[index]);
+    return NextResponse.json({
+      id: notification.id,
+      email,
+      title: notification.title,
+      message: notification.message,
+      type: notification.type,
+      read: notification.is_read,
+      orderId: notification.order_id,
+      createdAt: notification.created_at,
+    });
   } catch (error) {
     console.error("Error marking notification as read:", error);
     return NextResponse.json(

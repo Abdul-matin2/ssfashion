@@ -1,59 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { readFile, writeFile } from "fs/promises";
-import path from "path";
+import { createAdminClient } from "@/lib/supabase/server";
 import crypto from "crypto";
-import { Order, OrderStatus, PaymentStatus } from "@/types/product";
 
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY!;
-const DATA_FILE = path.join(process.cwd(), "src", "data", "orders.json");
-const NOTIFICATIONS_FILE = path.join(process.cwd(), "src", "data", "notifications.json");
-
-async function readOrders(): Promise<Order[]> {
-  try {
-    const data = await readFile(DATA_FILE, "utf-8");
-    return JSON.parse(data);
-  } catch {
-    return [];
-  }
-}
-
-async function writeOrders(orders: Order[]): Promise<void> {
-  await writeFile(DATA_FILE, JSON.stringify(orders, null, 2));
-}
-
-async function readNotifications(): Promise<any[]> {
-  try {
-    const data = await readFile(NOTIFICATIONS_FILE, "utf-8");
-    return JSON.parse(data);
-  } catch {
-    return [];
-  }
-}
-
-async function writeNotifications(notifications: any[]): Promise<void> {
-  await writeFile(NOTIFICATIONS_FILE, JSON.stringify(notifications, null, 2));
-}
-
-function createAdminNotification(order: Order) {
-  return {
-    id: `NTF-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
-    orderId: order.id,
-    orderNumber: order.id,
-    customerName: `${order.shipping.firstName} ${order.shipping.lastName}`,
-    customerPhone: order.shipping.phone,
-    total: order.total,
-    items: order.items.map((item) => ({
-      name: item.name,
-      size: item.size,
-      qty: item.quantity,
-      price: item.price,
-    })),
-    shippingAddress: `${order.shipping.address}, ${order.shipping.city}, ${order.shipping.region}`,
-    paymentMethod: order.paymentMethod,
-    createdAt: order.createdAt,
-    read: false,
-  };
-}
 
 function verifyPaystackSignature(payload: string, signature: string): boolean {
   const expectedSignature = crypto
@@ -65,6 +14,7 @@ function verifyPaystackSignature(payload: string, signature: string): boolean {
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createAdminClient();
     const payload = await request.text();
     const signature = request.headers.get("x-paystack-signature");
 
@@ -79,33 +29,36 @@ export async function POST(request: NextRequest) {
     if (event.event === "charge.success") {
       const transaction = event.data;
       const orderId = transaction.reference;
-      const amount = transaction.amount; // in pesewas
       const channel = transaction.channel;
-      const paidAt = transaction.paid_at;
 
       console.log(`Payment successful for order ${orderId} via ${channel}`);
 
       // Update order status
-      const orders = await readOrders();
-      const orderIndex = orders.findIndex((o) => o.id === orderId);
+      const { data: currentOrder, error: fetchError } = await supabase
+        .from("orders")
+        .select("payment_status")
+        .eq("id", orderId)
+        .single();
 
-      if (orderIndex === -1) {
+      if (fetchError || !currentOrder) {
         console.error(`Order ${orderId} not found`);
         return NextResponse.json({ error: "Order not found" }, { status: 404 });
       }
 
       // Only update if not already paid
-      if (orders[orderIndex].paymentStatus !== "paid") {
-        orders[orderIndex].paymentStatus = "paid";
-        orders[orderIndex].status = "processing";
-        orders[orderIndex].updatedAt = new Date().toISOString();
-        await writeOrders(orders);
+      if (currentOrder.payment_status !== "paid") {
+        const { error: updateError } = await supabase
+          .from("orders")
+          .update({
+            payment_status: "paid",
+            status: "processing",
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", orderId);
 
-        // Create admin notification
-        const adminNotification = createAdminNotification(orders[orderIndex]);
-        const notifications = await readNotifications();
-        notifications.unshift(adminNotification);
-        await writeNotifications(notifications);
+        if (updateError) {
+          console.error("Error updating order:", updateError);
+        }
       }
 
       return NextResponse.json({ success: true });
@@ -119,14 +72,17 @@ export async function POST(request: NextRequest) {
 
       console.log(`Payment failed for order ${orderId}: ${gatewayResponse}`);
 
-      const orders = await readOrders();
-      const orderIndex = orders.findIndex((o) => o.id === orderId);
+      const { error: updateError } = await supabase
+        .from("orders")
+        .update({
+          payment_status: "failed",
+          status: "cancelled",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", orderId);
 
-      if (orderIndex !== -1 && orders[orderIndex].paymentStatus !== "paid") {
-        orders[orderIndex].paymentStatus = "failed";
-        orders[orderIndex].status = "cancelled";
-        orders[orderIndex].updatedAt = new Date().toISOString();
-        await writeOrders(orders);
+      if (updateError) {
+        console.error("Error updating order:", updateError);
       }
 
       return NextResponse.json({ success: true });

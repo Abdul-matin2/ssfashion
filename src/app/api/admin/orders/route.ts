@@ -1,69 +1,82 @@
 import { NextRequest, NextResponse } from "next/server";
-import { readFile, writeFile } from "fs/promises";
-import path from "path";
-import { Order } from "@/types/product";
+import { createAdminClient } from "@/lib/supabase/server";
 import { sendAdminNewOrderEmail } from "@/lib/email";
-
-const DATA_FILE = path.join(process.cwd(), "src", "data", "orders.json");
-const NOTIFICATIONS_FILE = path.join(process.cwd(), "src", "data", "notifications.json");
-
-async function readOrders(): Promise<Order[]> {
-  const data = await readFile(DATA_FILE, "utf-8");
-  return JSON.parse(data);
-}
-
-async function writeOrders(orders: Order[]): Promise<void> {
-  await writeFile(DATA_FILE, JSON.stringify(orders, null, 2));
-}
-
-async function readNotifications(): Promise<any[]> {
-  try {
-    const data = await readFile(NOTIFICATIONS_FILE, "utf-8");
-    return JSON.parse(data);
-  } catch {
-    return [];
-  }
-}
-
-async function writeNotifications(notifications: any[]): Promise<void> {
-  await writeFile(NOTIFICATIONS_FILE, JSON.stringify(notifications, null, 2));
-}
-
-function createAdminNotification(order: Order) {
-  return {
-    id: `NTF-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
-    orderId: order.id,
-    orderNumber: order.id,
-    customerName: `${order.shipping.firstName} ${order.shipping.lastName}`,
-    customerPhone: order.shipping.phone,
-    total: order.total,
-    items: order.items.map((item) => ({
-      name: item.name,
-      size: item.size,
-      qty: item.quantity,
-      price: item.price,
-    })),
-    shippingAddress: `${order.shipping.address}, ${order.shipping.city}, ${order.shipping.region}`,
-    paymentMethod: order.paymentMethod,
-    createdAt: order.createdAt,
-    read: false,
-  };
-}
+import { Order, OrderItem, ShippingAddress } from "@/types/product";
 
 // GET /api/admin/orders — List all orders
 export async function GET(request: NextRequest) {
   try {
-    const orders = await readOrders();
+    const supabase = await createAdminClient();
     const { searchParams } = new URL(request.url);
 
     // Filter by status
     const status = searchParams.get("status");
-    let filtered = status ? orders.filter((o) => o.status === status) : orders;
+    let query = supabase
+      .from("orders")
+      .select(`
+        *,
+        order_items (
+          id,
+          product_id,
+          name,
+          image_url,
+          size,
+          color,
+          qty,
+          price
+        )
+      `)
+      .order("created_at", { ascending: false });
 
-    // Sort by createdAt (newest first)
-    filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    if (status) {
+      query = query.eq("status", status);
+    }
 
-    return NextResponse.json(filtered);
+    const { data: orders, error } = await query;
+
+    if (error) {
+      console.error("Error reading orders:", error);
+      return NextResponse.json(
+        { error: "Failed to read orders" },
+        { status: 500 }
+      );
+    }
+
+    // Transform to match Order interface
+    const transformedOrders: Order[] = (orders || []).map((order: any) => ({
+      id: order.id,
+      items: (order.order_items || []).map((item: any) => ({
+        productId: item.product_id || "",
+        name: item.name,
+        brand: "",
+        image: item.image_url || "",
+        price: item.price,
+        quantity: item.qty,
+        size: item.size,
+        color: item.color,
+        colorHex: undefined,
+      })),
+      shipping: {
+        email: order.customer_email || "",
+        firstName: order.customer_name?.split(" ")[0] || "",
+        lastName: order.customer_name?.split(" ").slice(1).join(" ") || "",
+        phone: order.customer_phone || "",
+        address: order.shipping_address?.address || "",
+        city: order.shipping_address?.city || "",
+        region: order.shipping_address?.region || "",
+        notes: "",
+      },
+      paymentMethod: order.payment_method,
+      subtotal: order.subtotal,
+      shippingFee: order.delivery_fee,
+      total: order.total,
+      status: order.status,
+      paymentStatus: order.payment_status || "pending",
+      createdAt: order.created_at,
+      updatedAt: order.updated_at,
+    }));
+
+    return NextResponse.json(transformedOrders);
   } catch (error) {
     console.error("Error reading orders:", error);
     return NextResponse.json(
@@ -76,57 +89,112 @@ export async function GET(request: NextRequest) {
 // POST /api/admin/orders — Create new order (used by checkout)
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createAdminClient();
     const body = await request.json();
-    const orders = await readOrders();
 
-    // Generate new order ID
-    const existingIds = orders.map((o) => parseInt(o.id.replace("ORD-", ""))).filter((n) => !isNaN(n));
-    const nextId = existingIds.length > 0 ? Math.max(...existingIds) + 1 : 1;
+    const { items, shipping, paymentMethod, subtotal, shippingFee, total } = body;
+
+    // Generate new order ID (ORD-XXX format)
+    const { data: maxOrder, error: maxError } = await supabase
+      .from("orders")
+      .select("id")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single();
+
+    let nextId = 1;
+    if (maxOrder?.id) {
+      const match = maxOrder.id.match(/ORD-(\d+)/);
+      if (match) {
+        nextId = parseInt(match[1]) + 1;
+      }
+    }
     const orderId = `ORD-${nextId.toString().padStart(3, "0")}`;
 
     const now = new Date().toISOString();
+    const customerName = `${shipping.firstName} ${shipping.lastName}`;
 
-    const newOrder: Order = {
-      id: orderId,
-      items: body.items,
-      shipping: body.shipping,
-      paymentMethod: body.paymentMethod,
-      subtotal: body.subtotal,
-      shippingFee: body.shippingFee,
-      total: body.total,
-      status: "pending",
-      paymentStatus: "pending",
-      createdAt: now,
-      updatedAt: now,
-    };
+    // Insert order
+    const { data: newOrder, error: orderError } = await supabase
+      .from("orders")
+      .insert({
+        id: orderId,
+        items: items, // Store full items as JSONB
+        subtotal,
+        delivery_fee: shippingFee,
+        discount: 0,
+        total,
+        status: "pending",
+        payment_method: paymentMethod,
+        payment_status: "pending",
+        shipping_address: shipping,
+        customer_email: shipping.email,
+        customer_name: customerName,
+        customer_phone: shipping.phone,
+        created_at: now,
+        updated_at: now,
+      })
+      .select()
+      .single();
 
-    orders.unshift(newOrder);
-    await writeOrders(orders);
+    if (orderError) {
+      console.error("Error creating order:", orderError);
+      return NextResponse.json(
+        { error: "Failed to create order" },
+        { status: 500 }
+      );
+    }
 
-    // Create admin notification
-    const adminNotification = createAdminNotification(newOrder);
-    const notifications = await readNotifications();
-    notifications.unshift(adminNotification);
-    await writeNotifications(notifications);
+    // Insert order items
+    const orderItems = items.map((item: OrderItem) => ({
+      order_id: orderId,
+      product_id: item.productId,
+      name: item.name,
+      image_url: typeof item.image === "object" ? item.image.url : item.image,
+      size: item.size,
+      color: item.color,
+      qty: item.quantity,
+      price: item.price,
+    }));
+
+    const { error: itemsError } = await supabase.from("order_items").insert(orderItems);
+    if (itemsError) {
+      console.error("Error creating order items:", itemsError);
+    }
 
     // Send admin email notification
     await sendAdminNewOrderEmail({
       orderId: newOrder.id,
-      customerName: `${newOrder.shipping.firstName} ${newOrder.shipping.lastName}`,
-      customerPhone: newOrder.shipping.phone,
-      customerEmail: newOrder.shipping.email,
-      total: newOrder.total,
-      items: newOrder.items.map((item) => ({
+      customerName,
+      customerPhone: shipping.phone,
+      customerEmail: shipping.email,
+      total,
+      items: items.map((item: OrderItem) => ({
         name: item.name,
         size: item.size,
         qty: item.quantity,
         price: item.price,
       })),
-      shippingAddress: `${newOrder.shipping.address}, ${newOrder.shipping.city}, ${newOrder.shipping.region}`,
-      paymentMethod: newOrder.paymentMethod,
+      shippingAddress: `${shipping.address}, ${shipping.city}, ${shipping.region}`,
+      paymentMethod,
     });
 
-    return NextResponse.json(newOrder, { status: 201 });
+    // Transform response to match Order interface
+    const responseOrder: Order = {
+      id: newOrder.id,
+      items,
+      shipping,
+      paymentMethod,
+      subtotal,
+      shippingFee,
+      total,
+      status: newOrder.status,
+      paymentStatus: newOrder.payment_status || "pending",
+      createdAt: newOrder.created_at,
+      updatedAt: newOrder.updated_at,
+    };
+
+    return NextResponse.json(responseOrder, { status: 201 });
   } catch (error) {
     console.error("Error creating order:", error);
     return NextResponse.json(
