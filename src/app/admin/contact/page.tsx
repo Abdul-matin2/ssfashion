@@ -43,11 +43,19 @@ export default function AdminContactPage() {
     fetchContact();
   }, []);
 
+  // Merge fetched data over the defaults so a partial/old payload (e.g.
+  // missing socialMedia) never leaves the page in an unusable state.
+  const mergeContact = (data: Partial<ContactData>): ContactData => ({
+    ...defaultContact,
+    ...data,
+    socialMedia: { ...defaultContact.socialMedia, ...(data.socialMedia || {}) },
+  });
+
   const fetchContact = async () => {
     try {
       const res = await fetch("/api/admin/contact");
       const data = await res.json();
-      if (data && !data.error) setContact(data);
+      if (data && !data.error) setContact(mergeContact(data));
     } catch (error) {
       console.error("Failed to fetch contact:", error);
     } finally {
