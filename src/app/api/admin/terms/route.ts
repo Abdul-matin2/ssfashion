@@ -1,16 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import fs from "fs/promises";
-import path from "path";
+import { readContentPage, writeContentPage } from "@/lib/supabase/content";
 
 export const dynamic = "force-dynamic";
 
-const TERMS_FILE = path.join(process.cwd(), "src/data/terms.json");
-
 export async function GET() {
   try {
-    const data = await fs.readFile(TERMS_FILE, "utf-8");
-    const terms = JSON.parse(data);
-    return NextResponse.json(terms, {
+    const data = await readContentPage("terms");
+    if (!data) {
+      return NextResponse.json({ error: "Failed to load Terms" }, { status: 500 });
+    }
+    return NextResponse.json(data, {
       headers: { "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate" },
     });
   } catch (error) {
@@ -28,7 +27,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    await fs.writeFile(TERMS_FILE, JSON.stringify(body, null, 2), "utf-8");
+    await writeContentPage("terms", body);
     return NextResponse.json({ success: true, data: body }, {
       headers: { "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate" },
     });

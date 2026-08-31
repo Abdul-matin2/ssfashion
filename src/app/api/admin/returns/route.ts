@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { readFile, writeFile } from "fs/promises";
-import path from "path";
+import { readContentPage, writeContentPage } from "@/lib/supabase/content";
 
 export const dynamic = "force-dynamic";
 
-const DATA_FILE = path.join(process.cwd(), "src", "data", "returns.json");
-
 export async function GET() {
   try {
-    const data = await readFile(DATA_FILE, "utf-8");
-    return NextResponse.json(JSON.parse(data), {
+    const data = await readContentPage("returns");
+    if (!data) {
+      return NextResponse.json({ error: "Failed to read returns data" }, { status: 500 });
+    }
+    return NextResponse.json(data, {
       headers: { "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate" },
     });
   } catch (error) {
@@ -21,7 +21,7 @@ export async function GET() {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
-    await writeFile(DATA_FILE, JSON.stringify(body, null, 2));
+    await writeContentPage("returns", body);
     return NextResponse.json({ success: true }, {
       headers: { "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate" },
     });

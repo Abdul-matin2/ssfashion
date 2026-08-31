@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import fs from "fs/promises";
-import path from "path";
+import { readContentPage, writeContentPage } from "@/lib/supabase/content";
 
 export const dynamic = "force-dynamic";
 
-const FAQS_FILE = path.join(process.cwd(), "src/data/faqs.json");
-
 export async function GET() {
   try {
-    const data = await fs.readFile(FAQS_FILE, "utf-8");
-    const faqs = JSON.parse(data);
+    const data = await readContentPage("faqs");
+    if (!data) {
+      return NextResponse.json({ error: "Failed to load FAQs" }, { status: 500 });
+    }
+    const faqs = Array.isArray(data) ? data : data.faqs || [];
     return NextResponse.json(faqs.sort((a: any, b: any) => a.order - b.order), {
       headers: { "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate" },
     });
@@ -22,8 +22,8 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const data = await fs.readFile(FAQS_FILE, "utf-8");
-    const faqs = JSON.parse(data);
+    const data = await readContentPage("faqs");
+    const faqs = Array.isArray(data) ? data : (data?.faqs || []);
 
     const newFaq = {
       id: Date.now().toString(),
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
     };
 
     faqs.push(newFaq);
-    await fs.writeFile(FAQS_FILE, JSON.stringify(faqs, null, 2), "utf-8");
+    await writeContentPage("faqs", faqs);
     return NextResponse.json(newFaq, {
       status: 201,
       headers: { "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate" },

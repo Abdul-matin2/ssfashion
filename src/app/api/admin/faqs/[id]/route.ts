@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import fs from "fs/promises";
-import path from "path";
+import { readContentPage, writeContentPage } from "@/lib/supabase/content";
 
 export const dynamic = "force-dynamic";
-
-const FAQS_FILE = path.join(process.cwd(), "src/data/faqs.json");
 
 export async function PUT(
   request: NextRequest,
@@ -13,8 +10,8 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const data = await fs.readFile(FAQS_FILE, "utf-8");
-    const faqs = JSON.parse(data);
+    const data = await readContentPage("faqs");
+    const faqs = Array.isArray(data) ? data : (data?.faqs || []);
 
     const index = faqs.findIndex((faq: any) => faq.id === id);
     if (index === -1) {
@@ -22,7 +19,7 @@ export async function PUT(
     }
 
     faqs[index] = { ...faqs[index], ...body };
-    await fs.writeFile(FAQS_FILE, JSON.stringify(faqs, null, 2), "utf-8");
+    await writeContentPage("faqs", faqs);
     return NextResponse.json(faqs[index], {
       headers: { "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate" },
     });
@@ -38,15 +35,15 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const data = await fs.readFile(FAQS_FILE, "utf-8");
-    const faqs = JSON.parse(data);
+    const data = await readContentPage("faqs");
+    const faqs = Array.isArray(data) ? data : (data?.faqs || []);
 
     const filtered = faqs.filter((faq: any) => faq.id !== id);
     if (filtered.length === faqs.length) {
       return NextResponse.json({ error: "FAQ not found" }, { status: 404 });
     }
 
-    await fs.writeFile(FAQS_FILE, JSON.stringify(filtered, null, 2), "utf-8");
+    await writeContentPage("faqs", filtered);
     return NextResponse.json({ success: true }, {
       headers: { "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate" },
     });

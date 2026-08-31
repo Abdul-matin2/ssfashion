@@ -54,5 +54,12 @@
     "answer": "Yes! Visit us at V344+JMC, Bimbila, Ghana. We're open Mon-Sat 9AM-8PM, Sun 10AM-6PM.",
     "category": "General",
     "order": 8
+  },
+  {
+    "id": "1788142892396",
+    "question": "Updated FAQ",
+    "answer": "Updated answer",
+    "category": "General",
+    "order": 9
   }
 ]

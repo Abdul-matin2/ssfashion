@@ -1,34 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
+import { readContentPage, writeContentPage } from "@/lib/supabase/content";
 
 export const dynamic = "force-dynamic";
 
-const DATA_FILE = path.join(process.cwd(), "src/data/about.json");
-
-function readData() {
-  try {
-    const fileContent = fs.readFileSync(DATA_FILE, "utf-8");
-    return JSON.parse(fileContent);
-  } catch (error) {
-    console.error("Failed to read about data:", error);
-    return null;
-  }
-}
-
-function writeData(data: unknown) {
-  try {
-    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), "utf-8");
-    return true;
-  } catch (error) {
-    console.error("Failed to write about data:", error);
-    return false;
-  }
-}
-
 export async function GET() {
   try {
-    const data = readData();
+    const data = await readContentPage("about");
     if (!data) {
       return NextResponse.json({ error: "Failed to load about data" }, { status: 500 });
     }
@@ -50,11 +27,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    const success = writeData(body);
-    if (!success) {
-      return NextResponse.json({ error: "Failed to save about data" }, { status: 500 });
-    }
-
+    await writeContentPage("about", body);
     return NextResponse.json({ success: true, data: body }, {
       headers: { "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate" },
     });

@@ -1,19 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import fs from "fs/promises";
-import path from "path";
+import { readContentPage, writeContentPage } from "@/lib/supabase/content";
 import { Affiliate } from "@/types/affiliate";
 
 export const dynamic = "force-dynamic";
 
-const AFFILIATES_FILE = path.join(process.cwd(), "src/data/affiliates.json");
-
 async function readAffiliates(): Promise<Affiliate[]> {
-  const data = await fs.readFile(AFFILIATES_FILE, "utf-8");
-  return JSON.parse(data);
+  const data = await readContentPage("affiliates");
+  if (!data) return [];
+  return Array.isArray(data) ? data : data.affiliates || [];
 }
 
 async function writeAffiliates(affiliates: Affiliate[]): Promise<void> {
-  await fs.writeFile(AFFILIATES_FILE, JSON.stringify(affiliates, null, 2), "utf-8");
+  await writeContentPage("affiliates", affiliates);
 }
 
 // GET /api/admin/affiliates — List all affiliates
