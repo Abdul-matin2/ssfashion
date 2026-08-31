@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 
+export const dynamic = "force-dynamic";
+
 const DATA_FILE = path.join(process.cwd(), "src/data/about.json");
 
 function readData() {
@@ -30,7 +32,9 @@ export async function GET() {
     if (!data) {
       return NextResponse.json({ error: "Failed to load about data" }, { status: 500 });
     }
-    return NextResponse.json(data);
+    return NextResponse.json(data, {
+      headers: { "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate" },
+    });
   } catch (error) {
     console.error("GET /api/admin/about error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
@@ -51,7 +55,9 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Failed to save about data" }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true, data: body });
+    return NextResponse.json({ success: true, data: body }, {
+      headers: { "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate" },
+    });
   } catch (error) {
     console.error("PUT /api/admin/about error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

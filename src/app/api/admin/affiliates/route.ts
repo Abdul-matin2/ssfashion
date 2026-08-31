@@ -3,6 +3,8 @@ import fs from "fs/promises";
 import path from "path";
 import { Affiliate } from "@/types/affiliate";
 
+export const dynamic = "force-dynamic";
+
 const AFFILIATES_FILE = path.join(process.cwd(), "src/data/affiliates.json");
 
 async function readAffiliates(): Promise<Affiliate[]> {
@@ -20,7 +22,9 @@ export async function GET() {
     const affiliates = await readAffiliates();
     // Sort by createdAt (newest first)
     affiliates.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    return NextResponse.json(affiliates);
+    return NextResponse.json(affiliates, {
+      headers: { "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate" },
+    });
   } catch (error) {
     console.error("Error reading affiliates:", error);
     return NextResponse.json(
@@ -67,7 +71,10 @@ export async function POST(request: NextRequest) {
     affiliates.unshift(newAffiliate);
     await writeAffiliates(affiliates);
 
-    return NextResponse.json(newAffiliate, { status: 201 });
+    return NextResponse.json(newAffiliate, {
+      status: 201,
+      headers: { "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate" },
+    });
   } catch (error) {
     console.error("Error creating affiliate:", error);
     return NextResponse.json(

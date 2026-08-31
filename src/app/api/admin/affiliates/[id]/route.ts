@@ -3,6 +3,8 @@ import fs from "fs/promises";
 import path from "path";
 import { Affiliate } from "@/types/affiliate";
 
+export const dynamic = "force-dynamic";
+
 const AFFILIATES_FILE = path.join(process.cwd(), "src/data/affiliates.json");
 
 async function readAffiliates(): Promise<Affiliate[]> {
@@ -31,7 +33,9 @@ export async function GET(
       );
     }
 
-    return NextResponse.json(affiliate);
+    return NextResponse.json(affiliate, {
+      headers: { "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate" },
+    });
   } catch (error) {
     console.error("Error reading affiliate:", error);
     return NextResponse.json(
@@ -75,7 +79,9 @@ export async function PUT(
 
     await writeAffiliates(affiliates);
 
-    return NextResponse.json(affiliates[index]);
+    return NextResponse.json(affiliates[index], {
+      headers: { "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate" },
+    });
   } catch (error) {
     console.error("Error updating affiliate:", error);
     return NextResponse.json(
@@ -105,7 +111,9 @@ export async function DELETE(
     const deleted = affiliates.splice(index, 1)[0];
     await writeAffiliates(affiliates);
 
-    return NextResponse.json({ success: true, affiliate: deleted });
+    return NextResponse.json({ success: true, affiliate: deleted }, {
+      headers: { "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate" },
+    });
   } catch (error) {
     console.error("Error deleting affiliate:", error);
     return NextResponse.json(

@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { getProductBySlug, getRelatedProducts } from "@/lib/supabase/queries";
 import { ProductDetailClient } from "./ProductDetailClient";
 
+export const dynamic = "force-dynamic";
+
 interface ProductPageProps {
   params: Promise<{ slug: string }>;
 }

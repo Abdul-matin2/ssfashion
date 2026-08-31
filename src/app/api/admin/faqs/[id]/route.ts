@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
 
+export const dynamic = "force-dynamic";
+
 const FAQS_FILE = path.join(process.cwd(), "src/data/faqs.json");
 
 export async function PUT(
@@ -21,7 +23,9 @@ export async function PUT(
 
     faqs[index] = { ...faqs[index], ...body };
     await fs.writeFile(FAQS_FILE, JSON.stringify(faqs, null, 2), "utf-8");
-    return NextResponse.json(faqs[index]);
+    return NextResponse.json(faqs[index], {
+      headers: { "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate" },
+    });
   } catch (error) {
     console.error("Failed to update FAQ:", error);
     return NextResponse.json({ error: "Failed to update FAQ" }, { status: 500 });
@@ -43,7 +47,9 @@ export async function DELETE(
     }
 
     await fs.writeFile(FAQS_FILE, JSON.stringify(filtered, null, 2), "utf-8");
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true }, {
+      headers: { "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate" },
+    });
   } catch (error) {
     console.error("Failed to delete FAQ:", error);
     return NextResponse.json({ error: "Failed to delete FAQ" }, { status: 500 });

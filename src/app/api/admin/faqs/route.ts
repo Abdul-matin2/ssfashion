@@ -2,13 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
 
+export const dynamic = "force-dynamic";
+
 const FAQS_FILE = path.join(process.cwd(), "src/data/faqs.json");
 
 export async function GET() {
   try {
     const data = await fs.readFile(FAQS_FILE, "utf-8");
     const faqs = JSON.parse(data);
-    return NextResponse.json(faqs.sort((a: any, b: any) => a.order - b.order));
+    return NextResponse.json(faqs.sort((a: any, b: any) => a.order - b.order), {
+      headers: { "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate" },
+    });
   } catch (error) {
     console.error("Failed to read FAQs:", error);
     return NextResponse.json({ error: "Failed to load FAQs" }, { status: 500 });
@@ -31,7 +35,10 @@ export async function POST(request: NextRequest) {
 
     faqs.push(newFaq);
     await fs.writeFile(FAQS_FILE, JSON.stringify(faqs, null, 2), "utf-8");
-    return NextResponse.json(newFaq, { status: 201 });
+    return NextResponse.json(newFaq, {
+      status: 201,
+      headers: { "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate" },
+    });
   } catch (error) {
     console.error("Failed to create FAQ:", error);
     return NextResponse.json({ error: "Failed to create FAQ" }, { status: 500 });
