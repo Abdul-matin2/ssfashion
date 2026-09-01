@@ -181,6 +181,20 @@ export default function CheckoutPage() {
       .finally(() => setRatesLoaded(true));
   }, []);
 
+  // Sync region to first available rate option when rates load
+  useEffect(() => {
+    if (ratesLoaded && rates.length > 0) {
+      const regionOptions = rates.map((r) => r.region);
+      setForm((prev) => {
+        // If current region isn't in the dropdown options, default to first rate
+        if (prev.region && !regionOptions.includes(prev.region)) {
+          return { ...prev, region: regionOptions[0] };
+        }
+        return prev;
+      });
+    }
+  }, [ratesLoaded, rates]);
+
   if (!isClient) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
@@ -511,17 +525,20 @@ export default function CheckoutPage() {
                     <label htmlFor="region" className="block text-sm font-medium text-brand-black mb-1.5">
                       Region
                     </label>
-                    <input
+                    <select
                       id="region"
                       name="region"
-                      type="text"
-                      autoComplete="address-level1"
                       value={form.region}
                       onChange={handleChange}
                       aria-invalid={!!errors.region}
-                      placeholder="Greater Accra"
-                      className={inputClass("region")}
-                    />
+                      className={cn(inputClass("region"), "appearance-none bg-white")}
+                    >
+                      {rates.map((rate) => (
+                        <option key={rate.region} value={rate.region}>
+                          {rate.region}
+                        </option>
+                      ))}
+                    </select>
                     {errors.region && <p className="mt-1.5 text-sm text-brand-red">{errors.region}</p>}
                   </div>
                 </div>

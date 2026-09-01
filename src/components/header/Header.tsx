@@ -138,6 +138,16 @@ export function Header() {
         {/* Mobile Menu Drawer */}
         {isMobileMenuOpen && (
           <div className="lg:hidden fixed inset-0 z-50 bg-white overflow-y-auto animate-in slide-in-from-top-2 duration-300">
+            {/* Close button at top-right of drawer */}
+            <button
+              onClick={closeMobileMenu}
+              className="absolute top-4 right-4 p-2 text-brand-black hover:text-brand-gold hover:bg-neutral-100 rounded-xl transition-colors z-50"
+              aria-label="Close menu"
+            >
+              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
             <div className="p-4 space-y-6">
               {/* Search in Mobile Menu */}
               <SearchBar className="mb-4" />
