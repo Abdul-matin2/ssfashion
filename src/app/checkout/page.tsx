@@ -54,48 +54,70 @@ const DEFAULT_RATES: ShippingRate[] = [
 ];
 
 function parsePrice(priceStr: string): number {
-  // Parse "GHS 20" or "GHS 50" to number (in pesewas)
-  const match = priceStr.match(/GHS\s*(\d+(?:\.\d+)?)/i);
+  // Parse "GHS 20", "GHS20", or a bare "20" to number (in pesewas).
+  // Returns 0 only when no number is present at all.
+  const value = (priceStr || "").trim();
+  const match = value.match(/(\d+(?:\.\d+)?)/);
   if (match) {
     return Math.round(parseFloat(match[1]) * 100);
   }
   return 0;
 }
 
-function parseThreshold(thresholdStr: string): number {
-  // Parse "GHS 500+" to number (in pesewas)
-  const match = thresholdStr.match(/GHS\s*(\d+(?:\.\d+)?)/i);
+function parseThreshold(thresholdStr: string): number | null {
+  // Parse "GHS 500+" to number (in pesewas). Returns null when no threshold
+  // is configured, meaning free shipping does NOT apply for this rate.
+  const value = (thresholdStr || "").trim();
+  if (!value) return null;
+  const match = value.match(/(\d+(?:\.\d+)?)/);
   if (match) {
     return Math.round(parseFloat(match[1]) * 100);
   }
-  return 50000; // default 500
+  return null;
+}
+
+const NORTHERN_GHANA_REGIONS = [
+  "Northern", "North East", "Savannah", "Upper East", "Upper West",
+];
+
+// Map a specific country region to a shipping rate group when the admin has
+// configured broader zones (e.g. "Northern Ghana", "Rest of Ghana").
+function resolveRateZone(region: string, rates: ShippingRate[]): string {
+  const normalizedRegion = (region || "").trim().toLowerCase();
+
+  // 1. Exact match on the rate's own region name
+  if (rates.some((r) => r.region.toLowerCase() === normalizedRegion)) {
+    return region;
+  }
+
+  // 2. Fuzzy match (region name is part of a rate region, or vice versa)
+  const fuzzy = rates.find(
+    (r) =>
+      r.region.toLowerCase().includes(normalizedRegion) ||
+      (normalizedRegion.length > 0 && normalizedRegion.includes(r.region.toLowerCase()))
+  );
+  if (fuzzy) return fuzzy.region;
+
+  // 3. Ghana zone mapping (only relevant when rates use zone groupings)
+  if (NORTHERN_GHANA_REGIONS.some((n) => n.toLowerCase() === normalizedRegion)) {
+    const northern = rates.find((r) => r.region.toLowerCase() === "northern ghana");
+    if (northern) return "Northern Ghana";
+  }
+  const restOfGhana = rates.find((r) => r.region.toLowerCase() === "rest of ghana");
+  if (restOfGhana) return "Rest of Ghana";
+
+  // 4. Fallback to the first rate
+  return rates[0]?.region ?? "";
 }
 
 function getShippingFee(region: string, rates: ShippingRate[]): { fee: number; freeThreshold: number } {
-  const normalizedRegion = region.trim();
-
-  // Find matching rate - first try exact region match
-  let matchedRate = rates.find((r) =>
-    r.region.toLowerCase() === normalizedRegion.toLowerCase()
-  );
-
-  // Try to match by region name containing the input (e.g., "Northern" matches "Northern Ghana")
-  if (!matchedRate) {
-    matchedRate = rates.find((r) =>
-      r.region.toLowerCase().includes(normalizedRegion.toLowerCase()) ||
-      normalizedRegion.toLowerCase().includes(r.region.toLowerCase())
-    );
-  }
-
-  // Fallback to first rate if no match
-  if (!matchedRate && rates.length > 0) {
-    matchedRate = rates[0];
-  }
+  const zone = resolveRateZone(region, rates);
+  const matchedRate = rates.find((r) => r.region === zone);
 
   if (matchedRate) {
     return {
       fee: parsePrice(matchedRate.standard),
-      freeThreshold: parseThreshold(matchedRate.freeThreshold || "GHS 500+"),
+      freeThreshold: parseThreshold(matchedRate.freeThreshold ?? "") ?? Infinity,
     };
   }
 

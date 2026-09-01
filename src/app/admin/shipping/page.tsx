@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { cn } from "@/lib/utils";
+import { getCountries, DEFAULT_COUNTRY_CODE } from "@/data/countries";
 
 interface ShippingData {
   hero: { title: string; subtitle: string };
@@ -58,6 +59,26 @@ export default function ShippingAdminPage() {
   const [editingFaqIndex, setEditingFaqIndex] = useState<number | null>(null);
   const [formData, setFormData] = useState<ShippingData>(defaultData);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [rateCountry, setRateCountry] = useState(DEFAULT_COUNTRY_CODE);
+
+  // Build flat list of all regions across all countries for the dropdown
+  const allRegions = useMemo(() => {
+    const countries = getCountries();
+    const regions: { value: string; label: string }[] = [];
+    countries.forEach((c) => {
+      c.regions.forEach((r) => {
+        regions.push({ value: r, label: `${r} (${c.name})` });
+      });
+    });
+    // Also include the existing zone-style groups so admins can keep using them
+    const zoneGroups = ["Northern Ghana", "Rest of Ghana", "West Africa", "East Africa", "Central Africa", "Southern Africa"];
+    zoneGroups.forEach((z) => {
+      if (!regions.some((r) => r.value === z)) {
+        regions.push({ value: z, label: `${z} (Zone)` });
+      }
+    });
+    return regions;
+  }, []);
 
   useEffect(() => {
     fetch("/api/admin/shipping")
@@ -348,7 +369,18 @@ export default function ShippingAdminPage() {
                     <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-brand-black mb-2">Region</label>
-                        <input type="text" value={rate.region} onChange={(e) => handleNestedChange("rates", index, "region", e.target.value)} className="w-full px-4 py-3 rounded-xl border border-neutral-300 focus:border-brand-gold focus:ring-2 focus:ring-brand-gold/20 outline-none" />
+                        <select
+                          value={rate.region}
+                          onChange={(e) => handleNestedChange("rates", index, "region", e.target.value)}
+                          className="w-full px-4 py-3 rounded-xl border border-neutral-300 focus:border-brand-gold focus:ring-2 focus:ring-brand-gold/20 outline-none bg-white"
+                        >
+                          <option value="">Select a region...</option>
+                          {allRegions.map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-brand-black mb-2">Standard</label>
