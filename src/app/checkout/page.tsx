@@ -8,6 +8,7 @@ import { useUserProfile } from "@/context/UserProfileContext";
 import { Button } from "@/components/ui/Button";
 import { formatPrice } from "@/lib/currency";
 import { cn } from "@/lib/utils";
+import { getRegions, DEFAULT_COUNTRY_CODE } from "@/data/countries";
 
 type PaymentMethod = "cod" | "momo" | "card";
 
@@ -152,6 +153,10 @@ export default function CheckoutPage() {
   const [rates, setRates] = useState<ShippingRate[]>(DEFAULT_RATES);
   const [ratesLoaded, setRatesLoaded] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+
+  // Get country-specific regions for the dropdown
+  const userCountry = profile.country || DEFAULT_COUNTRY_CODE;
+  const countryRegions = getRegions(userCountry);
 
   useEffect(() => {
     setIsClient(true);
@@ -533,9 +538,9 @@ export default function CheckoutPage() {
                       aria-invalid={!!errors.region}
                       className={cn(inputClass("region"), "appearance-none bg-white")}
                     >
-                      {rates.map((rate) => (
-                        <option key={rate.region} value={rate.region}>
-                          {rate.region}
+                      {countryRegions.map((region) => (
+                        <option key={region} value={region}>
+                          {region}
                         </option>
                       ))}
                     </select>
