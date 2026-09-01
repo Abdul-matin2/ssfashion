@@ -1,9 +1,36 @@
 import { Resend } from "resend";
 import { formatPrice } from "./currency";
+import { createAdminClient } from "./supabase/admin";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-const ADMIN_EMAIL = process.env.ADMIN_NOTIFICATION_EMAIL || "admin@ssfashion.com";
+/** Fetch the support email from admin contact settings (Supabase) */
+async function getSupportEmail(): Promise<string> {
+  try {
+    const supabase = createAdminClient();
+    const { data, error } = await supabase
+      .from("content_pages")
+      .select("content")
+      .eq("page_key", "contact")
+      .maybeSingle();
+    if (!error && data?.content?.email) {
+      return data.content.email;
+    }
+  } catch (error) {
+    console.warn("Failed to fetch contact email from Supabase, using fallback:", error);
+  }
+  return "support@ssfashion.com";
+}
+
+/** Fetch the admin notification email from env or contact settings */
+async function getAdminEmail(): Promise<string> {
+  // First check env var (allows override)
+  if (process.env.ADMIN_NOTIFICATION_EMAIL) {
+    return process.env.ADMIN_NOTIFICATION_EMAIL;
+  }
+  // Fall back to contact email from Supabase
+  return getSupportEmail();
+}
 
 interface OrderEmailData {
   orderId: string;
@@ -21,6 +48,8 @@ export async function sendAdminNewOrderEmail(data: OrderEmailData): Promise<bool
     console.warn("RESEND_API_KEY not configured - skipping admin order email");
     return false;
   }
+
+  const adminEmail = await getAdminEmail();
 
   const itemsHtml = data.items
     .map(
@@ -128,7 +157,7 @@ export async function sendAdminNewOrderEmail(data: OrderEmailData): Promise<bool
   try {
     await resend.emails.send({
       from: "S&S Fashion Orders <onboarding@resend.dev>",
-      to: [ADMIN_EMAIL],
+      to: [adminEmail],
       subject: `New Order #${data.orderId} — ${data.customerName} — ${formatPrice(data.total)}`,
       html,
     });
@@ -153,6 +182,8 @@ export async function sendCustomerStatusEmail(data: CustomerStatusEmailData): Pr
     console.warn("RESEND_API_KEY not configured - skipping customer status email");
     return false;
   }
+
+  const supportEmail = await getSupportEmail();
 
   const statusLabels: Record<string, { label: string; color: string; message: string }> = {
     processing: { label: "Processing", color: "#3b82f6", message: "Your order is now being prepared for shipment." },
@@ -213,7 +244,7 @@ export async function sendCustomerStatusEmail(data: CustomerStatusEmailData): Pr
 
               <p style="font-size: 14px; color: #6b7280; margin: 0;">
                 Thank you for shopping with S&S Fashion!<br>
-                If you have any questions, contact us at support@ssfashion.com
+                If you have any questions, contact us at ${supportEmail}
               </p>
             </div>
           </div>

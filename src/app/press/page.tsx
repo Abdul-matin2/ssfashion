@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useContact } from "@/hooks/useContact";
 
 interface PressData {
   hero: {
@@ -150,6 +151,7 @@ const icons: Record<string, React.ReactNode> = {
 
 export default function PressPage() {
   const [press, setPress] = useState<PressData>(defaultPress);
+  const { contact } = useContact();
 
   useEffect(() => {
     fetch("/api/admin/press")
@@ -272,16 +274,16 @@ export default function PressPage() {
             <p className="text-neutral-600 mb-4">For interviews, features, and media requests</p>
             <div className="space-y-2">
               <a
-                href={`mailto:${press.contact.email}`}
+                href={`mailto:${contact.email}`}
                 className="block text-brand-gold hover:text-brand-gold/80 font-medium transition-colors"
               >
-                {press.contact.email}
+                {contact.email}
               </a>
               <a
-                href={`tel:${press.contact.phone}`}
+                href={`tel:${contact.phone}`}
                 className="block text-neutral-600 hover:text-brand-black transition-colors"
               >
-                {press.contact.phone}
+                {contact.phone}
               </a>
             </div>
           </div>
@@ -297,7 +299,7 @@ export default function PressPage() {
           </p>
           <div className="flex justify-center gap-4">
             <a
-              href="https://instagram.com"
+              href={contact.socialMedia.instagram}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-6 py-3 bg-brand-gold text-brand-black rounded-xl font-semibold hover:bg-brand-gold/90 transition-colors"

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { formatPrice } from "@/lib/currency";
+import { useContact } from "@/hooks/useContact";
 
 const PAYMENT_LABELS: Record<string, string> = {
   cod: "Cash on Delivery",
@@ -26,6 +27,7 @@ interface OrderData {
 function OrderConfirmationContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { contact } = useContact();
   const [isClient, setIsClient] = useState(false);
   const [order, setOrder] = useState<OrderData | null>(null);
   const [isLoadingOrder, setIsLoadingOrder] = useState(false);
@@ -383,7 +385,7 @@ function OrderConfirmationContent() {
           </p>
           <div className="grid sm:grid-cols-2 gap-4">
             <Link
-              href="tel:+233240000000"
+              href={`tel:${contact.phone.replace(/\s/g, "")}`}
               className="flex items-center gap-3 p-4 rounded-xl border border-neutral-200 hover:border-brand-gold hover:bg-neutral-50 transition-colors"
             >
               <svg className="h-6 w-6 text-brand-gold flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -391,11 +393,11 @@ function OrderConfirmationContent() {
               </svg>
               <div>
                 <p className="font-medium text-brand-black">Call Us</p>
-                <p className="text-sm text-neutral-500">+233 24 000 0000</p>
+                <p className="text-sm text-neutral-500">{contact.phone}</p>
               </div>
             </Link>
             <Link
-              href="mailto:ssfashion233@gmail.com"
+              href={`mailto:${contact.email}`}
               className="flex items-center gap-3 p-4 rounded-xl border border-neutral-200 hover:border-brand-gold hover:bg-neutral-50 transition-colors"
             >
               <svg className="h-6 w-6 text-brand-gold flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -403,7 +405,7 @@ function OrderConfirmationContent() {
               </svg>
               <div>
                 <p className="font-medium text-brand-black">Email Us</p>
-                <p className="text-sm text-neutral-500">support@ssfashion.gh</p>
+                <p className="text-sm text-neutral-500">{contact.email}</p>
               </div>
             </Link>
           </div>

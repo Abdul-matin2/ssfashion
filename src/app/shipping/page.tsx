@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { useContact } from "@/hooks/useContact";
 
 interface ShippingData {
   hero: {
@@ -138,6 +139,7 @@ const icons: Record<string, React.ReactNode> = {
 export default function ShippingPage() {
   const [shipping, setShipping] = useState<ShippingData>(defaultShipping);
   const [expandedFaqs, setExpandedFaqs] = useState<string[]>([]);
+  const { contact } = useContact();
 
   useEffect(() => {
     fetch("/api/admin/shipping")
@@ -153,6 +155,10 @@ export default function ShippingPage() {
       prev.includes(question) ? prev.filter((q) => q !== question) : [...prev, question]
     );
   };
+
+  // Replace any hardcoded email in FAQ answers with the admin-configured contact email
+  const faqAnswer = (answer: string) =>
+    answer.replace(/(support@[\w.-]+\.\w+|ssfashion233@gmail\.com|admin@[\w.-]+\.\w+)/g, contact.email);
 
   return (
     <div className="min-h-screen bg-neutral-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -312,7 +318,7 @@ export default function ShippingPage() {
                   </svg>
                 </summary>
                 <div className="px-5 pb-5 pt-0 border-t border-neutral-100 animate-in fade-in slide-in-from-top-2 duration-200">
-                  <p className="text-neutral-600 leading-relaxed">{faq.answer}</p>
+                  <p className="text-neutral-600 leading-relaxed">{faqAnswer(faq.answer)}</p>
                 </div>
               </details>
             ))}

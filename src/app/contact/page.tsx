@@ -1,36 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
-interface ContactData {
-  address: string;
-  phone: string;
-  email: string;
-  hours: string;
-  socialMedia: {
-    instagram: string;
-    facebook: string;
-    x: string;
-    youtube: string;
-    tiktok: string;
-  };
-  mapEmbedUrl: string;
-}
-
-const defaultContact: ContactData = {
-  address: "123 Fashion Street, Accra, Ghana",
-  phone: "+233 24 123 4567",
-  email: "support@ssfashion.com",
-  hours: "Mon - Sat: 9:00 AM - 8:00 PM\nSun: 10:00 AM - 6:00 PM",
-  socialMedia: {
-    instagram: "https://instagram.com/ssfashion",
-    facebook: "https://facebook.com/ssfashion",
-    x: "https://x.com/ssfashion",
-    youtube: "https://youtube.com/ssfashion",
-    tiktok: "https://tiktok.com/@ssfashion",
-  },
-  mapEmbedUrl: "",
-};
+import { useContact } from "@/hooks/useContact";
 
 const socialIcons: Record<string, React.ReactNode> = {
   instagram: (
@@ -61,16 +31,23 @@ const socialIcons: Record<string, React.ReactNode> = {
 };
 
 export default function ContactPage() {
-  const [contact, setContact] = useState<ContactData>(defaultContact);
+  const { contact, isLoading } = useContact();
 
-  useEffect(() => {
-    fetch("/api/admin/contact")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data && !data.error) setContact(data);
-      })
-      .catch(() => {});
-  }, []);
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-neutral-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl">
+          <div className="animate-pulse space-y-8">
+            <div className="h-8 bg-neutral-200 rounded w-3/4 mx-auto" />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="h-96 bg-neutral-200 rounded-2xl" />
+              <div className="h-96 bg-neutral-200 rounded-2xl" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-neutral-50 py-12 px-4 sm:px-6 lg:px-8">
